@@ -36,21 +36,15 @@ export default function Filters({
       {/* Ano */}
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ano</span>
-        <div className="flex gap-1">
-          {[2025, 2026].map(y => (
-            <button
-              key={y}
-              onClick={() => onYearChange(y)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                year === y
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {y}
-            </button>
+        <select
+          value={year}
+          onChange={e => onYearChange(Number(e.target.value))}
+          className="text-sm border border-gray-200 rounded-lg px-3 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        >
+          {Array.from({ length: 6 }, (_, i) => 2025 + i).map(y => (
+            <option key={y} value={y}>{y}</option>
           ))}
-        </div>
+        </select>
       </div>
 
       <div className="w-px h-6 bg-gray-200" />
