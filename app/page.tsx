@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Area, Employee, VacationRecord } from '@/lib/types'
 import { getEmployeeStats } from '@/lib/utils'
 import { useData } from '@/hooks/useData'
@@ -37,6 +38,12 @@ export default function Home() {
   const [preselectedEmpId, setPreselectedEmpId] = useState<string | undefined>()
 
   const [showHolidayModal, setShowHolidayModal] = useState(false)
+  const router = useRouter()
+
+  async function handleLogout() {
+    await fetch('/api/auth', { method: 'DELETE' })
+    router.push('/login')
+  }
 
   const filteredEmployees = useMemo(() => {
     let list = employees
@@ -101,6 +108,13 @@ export default function Home() {
             <p className="text-sm text-gray-500">Gestão de férias e day offs por área</p>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              title="Sair"
+            >
+              Sair
+            </button>
             <button
               onClick={() => setShowHolidayModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
