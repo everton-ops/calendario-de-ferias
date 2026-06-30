@@ -1,13 +1,23 @@
 'use client'
 
-import { EmployeeStats as Stats } from '@/lib/types'
+import { Employee, EmployeeStats as Stats } from '@/lib/types'
 import { AREA_BG_LIGHT, AREA_TEXT_COLORS, AREA_COLORS } from '@/lib/utils'
 
 interface Props {
   stats: Stats[]
+  onEdit: (emp: Employee) => void
+  onRemove: (id: string) => void
 }
 
-export default function EmployeeStatsPanel({ stats }: Props) {
+export default function EmployeeStatsPanel({ stats, onEdit, onRemove }: Props) {
+  if (stats.length === 0) {
+    return (
+      <div className="bg-white border border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-400 text-sm">
+        Nenhum funcionário encontrado. Clique em &ldquo;Novo funcionário&rdquo; para começar.
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {stats.map(({ employee, usedVacationDays, remainingVacationDays, usedDayOffs }) => {
@@ -17,9 +27,27 @@ export default function EmployeeStatsPanel({ stats }: Props) {
         const areaText = AREA_TEXT_COLORS[employee.area]
 
         return (
-          <div key={employee.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+          <div key={employee.id} className="group bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col gap-3 relative">
+            {/* Ações */}
+            <div className="absolute top-2 right-2 hidden group-hover:flex gap-1">
+              <button
+                onClick={() => onEdit(employee)}
+                title="Editar"
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 text-gray-500 text-xs transition-colors"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => onRemove(employee.id)}
+                title="Remover"
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-500 text-xs transition-colors"
+              >
+                🗑
+              </button>
+            </div>
+
             <div className="flex flex-col gap-1">
-              <span className="font-semibold text-gray-900 text-sm leading-tight">{employee.name}</span>
+              <span className="font-semibold text-gray-900 text-sm leading-tight pr-8">{employee.name}</span>
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit ${areaBg} ${areaText}`}>
                 {employee.area}
               </span>
