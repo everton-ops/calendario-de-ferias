@@ -1,5 +1,29 @@
-import { Employee, VacationRecord, EmployeeStats } from './types'
+import { Employee, VacationRecord, EmployeeStats, CustomHoliday } from './types'
 import { countWorkingDays } from './holidays'
+
+// Resolve datas efetivas dos feriados customizados para um dado ano
+export function resolveCustomDates(customHolidays: CustomHoliday[], year: number): string[] {
+  return customHolidays
+    .map(h => {
+      if (h.recurring) {
+        // Aplica o mês/dia da data original ao ano solicitado
+        const mmdd = h.date.slice(5)
+        return `${year}-${mmdd}`
+      }
+      return h.date.startsWith(String(year)) ? h.date : null
+    })
+    .filter((d): d is string => d !== null)
+}
+
+// Retorna mapa de date -> nome para feriados customizados
+export function customHolidayMap(customHolidays: CustomHoliday[], year: number): Record<string, string> {
+  const map: Record<string, string> = {}
+  customHolidays.forEach(h => {
+    const dates = resolveCustomDates([h], year)
+    dates.forEach(d => { map[d] = h.name })
+  })
+  return map
+}
 
 export function getEmployeeStats(
   employee: Employee,

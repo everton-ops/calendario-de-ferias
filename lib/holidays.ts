@@ -92,12 +92,13 @@ const HOLIDAYS: Record<number, string[]> = {
   ],
 }
 
-export function getHolidays(year: number): Set<string> {
-  return new Set(HOLIDAYS[year] ?? [])
+export function getHolidays(year: number, customDates: string[] = []): Set<string> {
+  const national = HOLIDAYS[year] ?? []
+  return new Set([...national, ...customDates])
 }
 
-export function isHoliday(date: string, year: number): boolean {
-  return getHolidays(year).has(date)
+export function isHoliday(date: string, year: number, customDates: string[] = []): boolean {
+  return getHolidays(year, customDates).has(date)
 }
 
 export function isWeekend(dateStr: string): boolean {
@@ -105,18 +106,18 @@ export function isWeekend(dateStr: string): boolean {
   return d.getDay() === 0 || d.getDay() === 6
 }
 
-export function isWorkingDay(dateStr: string, year: number): boolean {
-  return !isWeekend(dateStr) && !isHoliday(dateStr, year)
+export function isWorkingDay(dateStr: string, year: number, customDates: string[] = []): boolean {
+  return !isWeekend(dateStr) && !isHoliday(dateStr, year, customDates)
 }
 
-export function countWorkingDays(start: string, end: string, year: number): number {
+export function countWorkingDays(start: string, end: string, year: number, customDates: string[] = []): number {
   const startDate = new Date(start + 'T12:00:00')
   const endDate = new Date(end + 'T12:00:00')
   let count = 0
   const current = new Date(startDate)
   while (current <= endDate) {
     const iso = current.toISOString().split('T')[0]
-    if (isWorkingDay(iso, year)) count++
+    if (isWorkingDay(iso, year, customDates)) count++
     current.setDate(current.getDate() + 1)
   }
   return count

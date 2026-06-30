@@ -17,6 +17,16 @@ export interface VacationRecord {
   type: RecordType
 }
 
+export type CustomHolidayType = 'regional' | 'sazonal' | 'recesso' | 'outro'
+
+export interface CustomHoliday {
+  id: string
+  name: string
+  date: string      // ISO yyyy-mm-dd
+  type: CustomHolidayType
+  recurring: boolean // repete todo ano nessa data
+}
+
 export interface EmployeeStats {
   employee: Employee
   usedVacationDays: number

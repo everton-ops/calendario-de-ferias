@@ -1,7 +1,7 @@
 'use client'
 
-import { Employee, VacationRecord } from '@/lib/types'
-import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, getDaysInMonth, MONTHS_PT } from '@/lib/utils'
+import { CustomHoliday, Employee, VacationRecord } from '@/lib/types'
+import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, getDaysInMonth, MONTHS_PT, resolveCustomDates, customHolidayMap } from '@/lib/utils'
 import { getHolidays, isWeekend } from '@/lib/holidays'
 import { useMemo, useState } from 'react'
 
@@ -9,12 +9,16 @@ interface Props {
   year: number
   employees: Employee[]
   records: VacationRecord[]
+  customHolidays: CustomHoliday[]
   onRecordClick: (record: VacationRecord) => void
 }
 
-export default function CalendarTimeline({ year, employees, records, onRecordClick }: Props) {
+export default function CalendarTimeline({ year, employees, records, customHolidays, onRecordClick }: Props) {
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
-  const holidays = useMemo(() => getHolidays(year), [year])
+
+  const customDates = useMemo(() => resolveCustomDates(customHolidays, year), [customHolidays, year])
+  const customNames = useMemo(() => customHolidayMap(customHolidays, year), [customHolidays, year])
+  const holidays = useMemo(() => getHolidays(year, customDates), [year, customDates])
 
   const months = Array.from({ length: 12 }, (_, i) => ({
     index: i,
@@ -23,13 +27,11 @@ export default function CalendarTimeline({ year, employees, records, onRecordCli
   }))
 
   function getCellStatus(employeeId: string, dateStr: string) {
-    const record = records.find(
-      r =>
-        r.employeeId === employeeId &&
-        dateStr >= r.startDate &&
-        dateStr <= r.endDate
-    )
-    return record ?? null
+    return records.find(r =>
+      r.employeeId === employeeId &&
+      dateStr >= r.startDate &&
+      dateStr <= r.endDate
+    ) ?? null
   }
 
   function padded(n: number) {
@@ -41,20 +43,19 @@ export default function CalendarTimeline({ year, employees, records, onRecordCli
       {/* Legend */}
       <div className="flex gap-4 px-4 py-3 border-b border-gray-100 text-xs text-gray-500 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-blue-400 inline-block" />
-          Férias
+          <span className="w-3 h-3 rounded-sm bg-blue-400 inline-block" />Férias
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-amber-400 inline-block" />
-          Day off
+          <span className="w-3 h-3 rounded-sm bg-amber-400 inline-block" />Day off
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-red-200 inline-block" />
-          Feriado
+          <span className="w-3 h-3 rounded-sm bg-red-200 inline-block" />Feriado nacional
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-gray-100 inline-block border border-gray-200" />
-          Fim de semana
+          <span className="w-3 h-3 rounded-sm bg-violet-200 inline-block" />Data especial
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-gray-100 inline-block border border-gray-200" />Fim de semana
         </div>
       </div>
 
@@ -82,13 +83,17 @@ export default function CalendarTimeline({ year, employees, records, onRecordCli
                   const day = d + 1
                   const dateStr = `${year}-${padded(month.index + 1)}-${padded(day)}`
                   const isWknd = isWeekend(dateStr)
+                  const isNational = (HOLIDAYS_SET[year] ?? new Set()).has(dateStr)
+                  const isCustom = customDates.includes(dateStr)
                   const isHol = holidays.has(dateStr)
                   return (
                     <th
                       key={dateStr}
+                      title={isCustom ? customNames[dateStr] : undefined}
                       className={`w-5 min-w-5 text-center py-1 font-normal border-b border-gray-200 ${
-                        isHol ? 'bg-red-100 text-red-600' :
-                        isWknd ? 'bg-gray-50 text-gray-400' :
+                        isNational ? 'bg-red-100 text-red-600' :
+                        isCustom   ? 'bg-violet-100 text-violet-600' :
+                        isWknd     ? 'bg-gray-50 text-gray-400' :
                         'text-gray-400'
                       } ${day === 1 ? 'border-l border-gray-200' : ''}`}
                     >
@@ -117,7 +122,8 @@ export default function CalendarTimeline({ year, employees, records, onRecordCli
                       const day = d + 1
                       const dateStr = `${year}-${padded(month.index + 1)}-${padded(day)}`
                       const isWknd = isWeekend(dateStr)
-                      const isHol = holidays.has(dateStr)
+                      const isNational = (HOLIDAYS_SET[year] ?? new Set()).has(dateStr)
+                      const isCustom = customDates.includes(dateStr)
                       const record = getCellStatus(emp.id, dateStr)
 
                       let cellClass = ''
@@ -129,8 +135,11 @@ export default function CalendarTimeline({ year, employees, records, onRecordCli
                       } else if (record?.type === 'dayoff') {
                         cellClass = 'bg-amber-400'
                         tooltipText = `${emp.name} — Day off`
-                      } else if (isHol) {
+                      } else if (isNational) {
                         cellClass = 'bg-red-100'
+                      } else if (isCustom) {
+                        cellClass = 'bg-violet-100'
+                        tooltipText = customNames[dateStr] ?? 'Data especial'
                       } else if (isWknd) {
                         cellClass = 'bg-gray-100'
                       }
@@ -169,3 +178,8 @@ export default function CalendarTimeline({ year, employees, records, onRecordCli
     </div>
   )
 }
+
+// Importado inline para distinguir nacionais de customizados visualmente
+import { getHolidays as _gh } from '@/lib/holidays'
+const HOLIDAYS_SET: Record<number, Set<string>> = {}
+for (let y = 2025; y <= 2030; y++) HOLIDAYS_SET[y] = _gh(y)

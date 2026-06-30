@@ -10,15 +10,17 @@ import MonthView from '@/components/MonthView'
 import EmployeeStatsPanel from '@/components/EmployeeStats'
 import EmployeeModal from '@/components/EmployeeModal'
 import VacationModal from '@/components/VacationModal'
+import CustomHolidayModal from '@/components/CustomHolidayModal'
 
 export default function Home() {
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth()
 
   const {
-    employees, records, loaded,
+    employees, records, customHolidays, loaded,
     addEmployee, updateEmployee, removeEmployee,
     addRecord, updateRecord, removeRecord,
+    addCustomHoliday, updateCustomHoliday, removeCustomHoliday,
   } = useData()
 
   const [year, setYear] = useState(currentYear)
@@ -33,6 +35,8 @@ export default function Home() {
   const [showVacationModal, setShowVacationModal] = useState(false)
   const [editingRecord, setEditingRecord] = useState<VacationRecord | null>(null)
   const [preselectedEmpId, setPreselectedEmpId] = useState<string | undefined>()
+
+  const [showHolidayModal, setShowHolidayModal] = useState(false)
 
   const filteredEmployees = useMemo(() => {
     let list = employees
@@ -98,6 +102,17 @@ export default function Home() {
           </div>
           <div className="flex gap-2">
             <button
+              onClick={() => setShowHolidayModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
+            >
+              📍 Datas especiais
+              {customHolidays.length > 0 && (
+                <span className="bg-violet-400 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">
+                  {customHolidays.length}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => openNewVacation()}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -142,6 +157,7 @@ export default function Home() {
             year={year}
             employees={filteredEmployees}
             records={records}
+            customHolidays={customHolidays}
             onRecordClick={openEditRecord}
           />
         ) : (
@@ -150,6 +166,7 @@ export default function Home() {
             month={selectedMonth}
             employees={filteredEmployees}
             records={records}
+            customHolidays={customHolidays}
             onRecordClick={openEditRecord}
           />
         )}
@@ -172,6 +189,17 @@ export default function Home() {
           onClose={() => { setShowVacationModal(false); setEditingRecord(null) }}
           onSave={handleSaveRecord}
           onDelete={removeRecord}
+        />
+      )}
+
+      {showHolidayModal && (
+        <CustomHolidayModal
+          holidays={customHolidays}
+          year={year}
+          onClose={() => setShowHolidayModal(false)}
+          onAdd={addCustomHoliday}
+          onUpdate={updateCustomHoliday}
+          onRemove={removeCustomHoliday}
         />
       )}
     </div>
