@@ -6,7 +6,8 @@ export interface Employee {
   id: string
   name: string
   area: Area
-  totalVacationDays: number // direito anual (padrão 30)
+  totalVacationDays: number  // direito anual (padrão 30)
+  vacationDeadline?: string  // ISO yyyy-mm-dd — data limite para tirar férias
 }
 
 export interface VacationRecord {

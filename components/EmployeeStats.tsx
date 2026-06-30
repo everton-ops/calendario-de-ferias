@@ -1,13 +1,25 @@
 'use client'
 
 import { Employee, EmployeeStats as Stats } from '@/lib/types'
-import { AREA_BG_LIGHT, AREA_TEXT_COLORS, AREA_COLORS } from '@/lib/utils'
+import { AREA_BG_LIGHT, AREA_TEXT_COLORS, AREA_COLORS, formatDate } from '@/lib/utils'
 
 interface Props {
   stats: Stats[]
   onEdit: (emp: Employee) => void
   onRemove: (id: string) => void
   onAddRecord: (employeeId: string) => void
+}
+
+function deadlineInfo(dateStr: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(dateStr + 'T00:00:00')
+  const days = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (days < 0)  return { label: `Vencida há ${Math.abs(days)}d`, cls: 'bg-red-100 text-red-600' }
+  if (days <= 30) return { label: `Limite: ${days}d 🔴`, cls: 'bg-red-50 text-red-600' }
+  if (days <= 90) return { label: `Limite: ${formatDate(dateStr)} 🟡`, cls: 'bg-yellow-50 text-yellow-700' }
+  return { label: `Limite: ${formatDate(dateStr)}`, cls: 'bg-gray-50 text-gray-500' }
 }
 
 export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecord }: Props) {
@@ -26,6 +38,7 @@ export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecor
         const areaColor = AREA_COLORS[employee.area]
         const areaBg = AREA_BG_LIGHT[employee.area]
         const areaText = AREA_TEXT_COLORS[employee.area]
+        const dl = employee.vacationDeadline ? deadlineInfo(employee.vacationDeadline) : null
 
         return (
           <div key={employee.id} className="group bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col gap-3 relative">
@@ -67,16 +80,19 @@ export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecor
                 <span className="font-medium text-gray-700">{usedVacationDays}/{employee.totalVacationDays} dias</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${areaColor}`}
-                  style={{ width: `${pct}%` }}
-                />
+                <div className={`h-full rounded-full transition-all ${areaColor}`} style={{ width: `${pct}%` }} />
               </div>
               <div className="flex justify-between text-xs">
                 <span className={`font-semibold ${areaText}`}>{pct}% usado</span>
                 <span className="text-gray-400">{remainingVacationDays} restam</span>
               </div>
             </div>
+
+            {dl && (
+              <div className={`flex items-center gap-1.5 text-xs px-2 py-1.5 rounded-lg border border-transparent ${dl.cls}`}>
+                <span className="font-medium">{dl.label}</span>
+              </div>
+            )}
 
             {usedDayOffs > 0 && (
               <div className="flex items-center justify-between text-xs border-t border-gray-100 pt-2">
