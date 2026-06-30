@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Area, Employee } from '@/lib/types'
+import { Area, Employee, VacationRecord } from '@/lib/types'
 import { getEmployeeStats } from '@/lib/utils'
 import { useData } from '@/hooks/useData'
 import Filters from '@/components/Filters'
@@ -9,20 +9,30 @@ import CalendarTimeline from '@/components/CalendarTimeline'
 import MonthView from '@/components/MonthView'
 import EmployeeStatsPanel from '@/components/EmployeeStats'
 import EmployeeModal from '@/components/EmployeeModal'
+import VacationModal from '@/components/VacationModal'
 
 export default function Home() {
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth()
 
-  const { employees, records, loaded, addEmployee, updateEmployee, removeEmployee } = useData()
+  const {
+    employees, records, loaded,
+    addEmployee, updateEmployee, removeEmployee,
+    addRecord, updateRecord, removeRecord,
+  } = useData()
 
   const [year, setYear] = useState(currentYear)
   const [selectedArea, setSelectedArea] = useState<Area | 'Todas'>('Todas')
   const [selectedEmployee, setSelectedEmployee] = useState<string | 'Todos'>('Todos')
   const [view, setView] = useState<'timeline' | 'month'>('timeline')
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
-  const [showModal, setShowModal] = useState(false)
+
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+
+  const [showVacationModal, setShowVacationModal] = useState(false)
+  const [editingRecord, setEditingRecord] = useState<VacationRecord | null>(null)
+  const [preselectedEmpId, setPreselectedEmpId] = useState<string | undefined>()
 
   const filteredEmployees = useMemo(() => {
     let list = employees
@@ -36,21 +46,34 @@ export default function Home() {
     [filteredEmployees, records, year]
   )
 
+  function openNewVacation(employeeId?: string) {
+    setEditingRecord(null)
+    setPreselectedEmpId(employeeId)
+    setShowVacationModal(true)
+  }
+
+  function openEditRecord(record: VacationRecord) {
+    setEditingRecord(record)
+    setPreselectedEmpId(undefined)
+    setShowVacationModal(true)
+  }
+
   function handleSaveEmployee(emp: Employee) {
-    if (editingEmployee) {
-      updateEmployee(emp)
-    } else {
-      addEmployee(emp)
-    }
+    editingEmployee ? updateEmployee(emp) : addEmployee(emp)
     setEditingEmployee(null)
   }
 
-  function handleEdit(emp: Employee) {
-    setEditingEmployee(emp)
-    setShowModal(true)
+  function handleSaveRecord(record: VacationRecord) {
+    editingRecord ? updateRecord(record) : addRecord(record)
+    setEditingRecord(null)
   }
 
-  function handleRemove(id: string) {
+  function handleEditEmployee(emp: Employee) {
+    setEditingEmployee(emp)
+    setShowEmployeeModal(true)
+  }
+
+  function handleRemoveEmployee(id: string) {
     if (confirm('Remover este funcionário e todos os seus registros?')) {
       removeEmployee(id)
       if (selectedEmployee === id) setSelectedEmployee('Todos')
@@ -73,13 +96,22 @@ export default function Home() {
             <h1 className="text-xl font-bold text-gray-900">Calendário de Férias</h1>
             <p className="text-sm text-gray-500">Gestão de férias e day offs por área</p>
           </div>
-          <button
-            onClick={() => { setEditingEmployee(null); setShowModal(true) }}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            <span className="text-lg leading-none">+</span>
-            Novo funcionário
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => openNewVacation()}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <span className="text-lg leading-none">+</span>
+              Registrar período
+            </button>
+            <button
+              onClick={() => { setEditingEmployee(null); setShowEmployeeModal(true) }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              <span className="text-lg leading-none">+</span>
+              Novo funcionário
+            </button>
+          </div>
         </div>
       </header>
 
@@ -100,8 +132,9 @@ export default function Home() {
 
         <EmployeeStatsPanel
           stats={stats}
-          onEdit={handleEdit}
-          onRemove={handleRemove}
+          onEdit={handleEditEmployee}
+          onRemove={handleRemoveEmployee}
+          onAddRecord={openNewVacation}
         />
 
         {view === 'timeline' ? (
@@ -109,6 +142,7 @@ export default function Home() {
             year={year}
             employees={filteredEmployees}
             records={records}
+            onRecordClick={openEditRecord}
           />
         ) : (
           <MonthView
@@ -116,15 +150,28 @@ export default function Home() {
             month={selectedMonth}
             employees={filteredEmployees}
             records={records}
+            onRecordClick={openEditRecord}
           />
         )}
       </main>
 
-      {showModal && (
+      {showEmployeeModal && (
         <EmployeeModal
           initial={editingEmployee}
-          onClose={() => { setShowModal(false); setEditingEmployee(null) }}
+          onClose={() => { setShowEmployeeModal(false); setEditingEmployee(null) }}
           onSave={handleSaveEmployee}
+        />
+      )}
+
+      {showVacationModal && (
+        <VacationModal
+          employees={employees}
+          records={records}
+          initial={editingRecord}
+          preselectedEmployeeId={preselectedEmpId}
+          onClose={() => { setShowVacationModal(false); setEditingRecord(null) }}
+          onSave={handleSaveRecord}
+          onDelete={removeRecord}
         />
       )}
     </div>

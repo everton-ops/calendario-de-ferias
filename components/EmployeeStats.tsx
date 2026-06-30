@@ -7,9 +7,10 @@ interface Props {
   stats: Stats[]
   onEdit: (emp: Employee) => void
   onRemove: (id: string) => void
+  onAddRecord: (employeeId: string) => void
 }
 
-export default function EmployeeStatsPanel({ stats, onEdit, onRemove }: Props) {
+export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecord }: Props) {
   if (stats.length === 0) {
     return (
       <div className="bg-white border border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-400 text-sm">
@@ -31,8 +32,15 @@ export default function EmployeeStatsPanel({ stats, onEdit, onRemove }: Props) {
             {/* Ações */}
             <div className="absolute top-2 right-2 hidden group-hover:flex gap-1">
               <button
+                onClick={() => onAddRecord(employee.id)}
+                title="Registrar período"
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs transition-colors"
+              >
+                +
+              </button>
+              <button
                 onClick={() => onEdit(employee)}
-                title="Editar"
+                title="Editar funcionário"
                 className="w-6 h-6 flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 text-gray-500 text-xs transition-colors"
               >
                 ✏️

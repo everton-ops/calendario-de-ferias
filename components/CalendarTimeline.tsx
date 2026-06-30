@@ -9,9 +9,10 @@ interface Props {
   year: number
   employees: Employee[]
   records: VacationRecord[]
+  onRecordClick: (record: VacationRecord) => void
 }
 
-export default function CalendarTimeline({ year, employees, records }: Props) {
+export default function CalendarTimeline({ year, employees, records, onRecordClick }: Props) {
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
   const holidays = useMemo(() => getHolidays(year), [year])
 
@@ -137,7 +138,8 @@ export default function CalendarTimeline({ year, employees, records }: Props) {
                       return (
                         <td
                           key={dateStr}
-                          className={`w-5 min-w-5 h-8 border-b border-gray-100 cursor-default ${cellClass} ${day === 1 ? 'border-l border-gray-200' : ''}`}
+                          className={`w-5 min-w-5 h-8 border-b border-gray-100 ${record ? 'cursor-pointer hover:opacity-75' : 'cursor-default'} ${cellClass} ${day === 1 ? 'border-l border-gray-200' : ''}`}
+                          onClick={() => record && onRecordClick(record)}
                           onMouseEnter={e => {
                             if (tooltipText) {
                               const rect = (e.target as HTMLElement).getBoundingClientRect()

@@ -45,5 +45,21 @@ export function useData() {
     saveRecords(records.filter(r => r.employeeId !== id))
   }
 
-  return { employees, records, loaded, addEmployee, updateEmployee, removeEmployee }
+  function addRecord(record: VacationRecord) {
+    saveRecords([...records, record])
+  }
+
+  function updateRecord(updated: VacationRecord) {
+    saveRecords(records.map(r => r.id === updated.id ? updated : r))
+  }
+
+  function removeRecord(id: string) {
+    saveRecords(records.filter(r => r.id !== id))
+  }
+
+  return {
+    employees, records, loaded,
+    addEmployee, updateEmployee, removeEmployee,
+    addRecord, updateRecord, removeRecord,
+  }
 }

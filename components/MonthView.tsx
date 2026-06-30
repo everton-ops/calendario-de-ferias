@@ -10,11 +10,12 @@ interface Props {
   month: number
   employees: Employee[]
   records: VacationRecord[]
+  onRecordClick: (record: VacationRecord) => void
 }
 
 const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export default function MonthView({ year, month, employees, records }: Props) {
+export default function MonthView({ year, month, employees, records, onRecordClick }: Props) {
   const holidays = useMemo(() => getHolidays(year), [year])
   const daysInMonth = getDaysInMonth(year, month)
 
@@ -95,12 +96,13 @@ export default function MonthView({ year, month, employees, records }: Props) {
                 return (
                   <div
                     key={record.id}
-                    className={`text-xs px-1.5 py-0.5 rounded font-medium truncate ${
+                    onClick={() => onRecordClick(record)}
+                    className={`text-xs px-1.5 py-0.5 rounded font-medium truncate cursor-pointer hover:opacity-80 transition-opacity ${
                       isFerias
                         ? `${AREA_COLORS[emp.area]} text-white`
                         : 'bg-amber-400 text-white'
                     }`}
-                    title={`${emp.name} — ${isFerias ? 'Férias' : 'Day off'}`}
+                    title={`${emp.name} — ${isFerias ? 'Férias' : 'Day off'} (clique para editar)`}
                   >
                     {emp.name.split(' ')[0]} {isFerias ? '' : '(off)'}
                   </div>
