@@ -26,7 +26,7 @@ export default function Home() {
   const [year, setYear] = useState(currentYear)
   const [selectedArea, setSelectedArea] = useState<Area | 'Todas'>('Todas')
   const [selectedEmployee, setSelectedEmployee] = useState<string | 'Todos'>('Todos')
-  const [view, setView] = useState<'timeline' | 'month'>('timeline')
+  const [view, setView] = useState<'timeline' | 'month'>('month')
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
 
   const [showEmployeeModal, setShowEmployeeModal] = useState(false)
