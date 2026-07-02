@@ -50,7 +50,7 @@ export default function Filters({
 
   return (
     <div className="sticky top-0 z-20">
-      <div className="flex flex-wrap gap-3 items-center bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-sm">
+      <div className="flex flex-nowrap gap-3 items-center bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-sm overflow-x-auto">
         {/* Ano */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ano</span>
@@ -126,7 +126,7 @@ export default function Filters({
         <div className="w-px h-6 bg-gray-200" />
 
         {/* Área */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-nowrap shrink-0">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Área</span>
           <button
             onClick={() => { onAreaChange('Todas'); onEmployeeChange('Todos') }}
