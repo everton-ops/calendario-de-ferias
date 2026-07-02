@@ -5,7 +5,7 @@ import { Area, Employee, RecordType, VacationRecord } from '@/lib/types'
 import { AREA_BG_LIGHT, AREA_TEXT_COLORS } from '@/lib/utils'
 import { countWorkingDays, isWeekend, isHoliday } from '@/lib/holidays'
 
-const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação']
+const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
 
 interface Props {
   employees: Employee[]
