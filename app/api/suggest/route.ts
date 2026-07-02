@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
 ## Funcionário
 - Nome: ${employee.name}
 - Área: ${employee.area}
-- Dias de férias disponíveis: ${employee.remainingDays} dias úteis
-- Dias solicitados: ${desiredDays} dias úteis
+- Dias de férias disponíveis: ${employee.remainingDays} dias corridos
+- Dias solicitados: ${desiredDays} dias corridos
 ${employee.vacationDeadline ? `- Data limite para tirar férias: ${employee.vacationDeadline}` : ''}
 
 ## Ano: ${year}
@@ -86,11 +86,11 @@ ${customHolidays.length > 0
 Os feriados nacionais do Brasil para ${year} incluem: Confraternização Universal (01/01), Carnaval (fevereiro), Sexta-feira Santa (março/abril), Tiradentes (21/04), Dia do Trabalho (01/05), Corpus Christi (junho), Independência (07/09), Nossa Senhora Aparecida (12/10), Finados (02/11), Proclamação da República (15/11), Consciência Negra (20/11), Natal (25/12).
 
 ## Sua tarefa
-Sugira exatamente 3 opções de período de férias para ${employee.name} com ${desiredDays} dias úteis cada.
+Sugira exatamente 3 opções de período de férias para ${employee.name} com ${desiredDays} dias corridos cada.
 
 Para cada sugestão:
 1. Calcule a data de início (segunda-feira preferencialmente) e a data de término
-2. Leve em conta que dias úteis excluem sábados, domingos e feriados nacionais
+2. Leve em conta que dias corridos excluem sábados, domingos e feriados nacionais
 3. Respeite todas as restrições informadas
 4. Prefira períodos nos meses indicados
 5. Se houver data limite, garanta que o período termine antes dela

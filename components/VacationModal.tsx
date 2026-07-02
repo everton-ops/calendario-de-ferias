@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Area, Employee, RecordType, VacationRecord } from '@/lib/types'
 import { AREA_BG_LIGHT, AREA_TEXT_COLORS } from '@/lib/utils'
-import { countWorkingDays, isWeekend, isHoliday } from '@/lib/holidays'
+import { countCalendarDays } from '@/lib/utils'
+import { isWeekend, isHoliday } from '@/lib/holidays'
 
 const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
 
@@ -31,8 +32,8 @@ export default function VacationModal({
   const selectedEmployee = employees.find(e => e.id === employeeId)
   const year = startDate ? new Date(startDate).getFullYear() : new Date().getFullYear()
 
-  const workingDays = startDate && endDate && endDate >= startDate
-    ? countWorkingDays(startDate, endDate, year)
+  const calendarDays = startDate && endDate && endDate >= startDate
+    ? countCalendarDays(startDate, endDate)
     : 0
 
   // For day off, end = start always
@@ -195,10 +196,10 @@ export default function VacationModal({
           </div>
 
           {/* Resumo de dias úteis */}
-          {type === 'ferias' && workingDays > 0 && (
+          {type === 'ferias' && calendarDays > 0 && (
             <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 text-sm">
-              <span className="text-blue-700">Dias úteis no período</span>
-              <span className="font-bold text-blue-800">{workingDays} dias</span>
+              <span className="text-blue-700">Dias corridos no período</span>
+              <span className="font-bold text-blue-800">{calendarDays} dias</span>
             </div>
           )}
 

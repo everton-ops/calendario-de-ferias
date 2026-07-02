@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react'
 import { Employee, VacationRecord, CustomHoliday } from '@/lib/types'
-import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, resolveCustomDates } from '@/lib/utils'
-import { countWorkingDays } from '@/lib/holidays'
+import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, resolveCustomDates, countCalendarDays } from '@/lib/utils'
 
 const AREAS = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança'] as const
 
@@ -36,7 +35,7 @@ export default function AreaDashboard({ employees, records, customHolidays, year
       areaEmps.forEach(emp => {
         const empRecords = records.filter(r => r.employeeId === emp.id && r.type === 'ferias')
         const yearRecords = empRecords.filter(r => r.startDate.startsWith(String(year)))
-        const used = yearRecords.reduce((s, r) => s + countWorkingDays(r.startDate, r.endDate, year, customDates), 0)
+        const used = yearRecords.reduce((s, r) => s + countCalendarDays(r.startDate, r.endDate), 0)
         totalUsed += used
         totalRight += emp.totalVacationDays
 
@@ -90,7 +89,7 @@ export default function AreaDashboard({ employees, records, customHolidays, year
                 <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
               </div>
               <div className="flex justify-between text-xs text-gray-500">
-                <span>{totalUsed} dias usados</span>
+                <span>{totalUsed} dias corridos</span>
                 <span className="font-medium">{pct}%</span>
               </div>
             </div>

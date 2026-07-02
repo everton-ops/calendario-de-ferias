@@ -2,7 +2,7 @@
 
 import { Employee, VacationRecord } from '@/lib/types'
 import { formatDate, AREA_BG_LIGHT, AREA_TEXT_COLORS } from '@/lib/utils'
-import { countWorkingDays } from '@/lib/holidays'
+import { countCalendarDays } from '@/lib/utils'
 
 interface Props {
   employee: Employee
@@ -22,10 +22,7 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
 
   const totalVacationDays = empRecords
     .filter(r => r.type === 'ferias')
-    .reduce((sum, r) => {
-      const year = Number(r.startDate.slice(0, 4))
-      return sum + countWorkingDays(r.startDate, r.endDate, year)
-    }, 0)
+    .reduce((sum, r) => sum + countCalendarDays(r.startDate, r.endDate), 0)
 
   const totalDayOffs = empRecords.filter(r => r.type === 'dayoff').length
 
@@ -51,7 +48,7 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
         <div className="px-6 py-3 border-b border-gray-100 flex gap-6">
           <div className="flex flex-col">
             <span className="text-xs text-gray-500">Férias registradas</span>
-            <span className="text-sm font-semibold text-blue-600">{totalVacationDays} dias úteis</span>
+            <span className="text-sm font-semibold text-blue-600">{totalVacationDays} dias corridos</span>
           </div>
           <div className="flex flex-col">
             <span className="text-xs text-gray-500">Day offs</span>
@@ -76,8 +73,7 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
           ) : (
             <div className="flex flex-col gap-2">
               {empRecords.map(record => {
-                const year = Number(record.startDate.slice(0, 4))
-                const days = countWorkingDays(record.startDate, record.endDate, year)
+                const days = countCalendarDays(record.startDate, record.endDate)
                 const isFerias = record.type === 'ferias'
                 return (
                   <div
@@ -94,7 +90,7 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
                         <span className="text-sm font-medium text-gray-800">
                           {formatDate(record.startDate)} → {formatDate(record.endDate)}
                         </span>
-                        <span className="text-xs text-gray-400">{year} · {days} dias úteis</span>
+                        <span className="text-xs text-gray-400">{record.startDate.slice(0, 4)} · {days} dias corridos</span>
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">

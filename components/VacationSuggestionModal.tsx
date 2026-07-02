@@ -151,7 +151,7 @@ export default function VacationSuggestionModal({
             </select>
             {stats && (
               <p className="text-xs text-gray-500">
-                Saldo disponível: <span className="font-semibold text-gray-700">{stats.remainingVacationDays} dias úteis</span>
+                Saldo disponível: <span className="font-semibold text-gray-700">{stats.remainingVacationDays} dias corridos</span>
                 {selectedEmployee?.vacationDeadline && (
                   <> · Limite: <span className="font-semibold text-orange-600">{formatDate(selectedEmployee.vacationDeadline)}</span></>
                 )}
@@ -162,7 +162,7 @@ export default function VacationSuggestionModal({
           {/* Desired days */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700">
-              Quantidade de dias úteis desejados
+              Quantidade de dias corridos desejados
             </label>
             <input
               type="number"
@@ -272,7 +272,7 @@ export default function VacationSuggestionModal({
                         {formatDate(s.startDate)} → {formatDate(s.endDate)}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {s.workingDays} dias úteis
+                        {s.workingDays} dias corridos
                       </p>
                       <p className="text-sm text-gray-600 mt-1">{s.reason}</p>
                     </div>

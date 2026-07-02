@@ -95,7 +95,7 @@ export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecor
         <div className="flex flex-col gap-1">
           <div className="flex justify-between text-xs text-gray-500">
             <span>Férias</span>
-            <span className="font-medium text-gray-700">{usedVacationDays}/{employee.totalVacationDays} dias</span>
+            <span className="font-medium text-gray-700">{usedVacationDays}/{employee.totalVacationDays} dias corridos</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />

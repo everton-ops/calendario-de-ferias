@@ -1,6 +1,12 @@
 import { Employee, VacationRecord, EmployeeStats, CustomHoliday } from './types'
 import { countWorkingDays } from './holidays'
 
+export function countCalendarDays(start: string, end: string): number {
+  const s = new Date(start + 'T12:00:00')
+  const e = new Date(end + 'T12:00:00')
+  return Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1
+}
+
 function expandDates(startStr: string, endStr: string, year: number): string[] {
   const dates: string[] = []
   let d = new Date(startStr + 'T12:00:00')
@@ -71,7 +77,7 @@ export function getEmployeeStats(
 
   const usedVacationDays = employeeRecords
     .filter((r) => r.type === 'ferias')
-    .reduce((sum, r) => sum + countWorkingDays(r.startDate, r.endDate, year), 0)
+    .reduce((sum, r) => sum + countCalendarDays(r.startDate, r.endDate), 0)
 
   const usedDayOffs = employeeRecords.filter((r) => r.type === 'dayoff').length
 
