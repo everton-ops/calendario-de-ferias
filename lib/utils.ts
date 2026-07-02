@@ -99,6 +99,8 @@ export const AREA_COLORS: Record<string, string> = {
   'SEO': 'bg-green-500',
   'Atendimento': 'bg-orange-500',
   'Criação': 'bg-pink-500',
+  'CRM': 'bg-cyan-500',
+  'Liderança': 'bg-slate-600',
 }
 
 export const AREA_TEXT_COLORS: Record<string, string> = {
@@ -107,6 +109,8 @@ export const AREA_TEXT_COLORS: Record<string, string> = {
   'SEO': 'text-green-700',
   'Atendimento': 'text-orange-700',
   'Criação': 'text-pink-700',
+  'CRM': 'text-cyan-700',
+  'Liderança': 'text-slate-700',
 }
 
 export const AREA_BG_LIGHT: Record<string, string> = {
@@ -115,6 +119,8 @@ export const AREA_BG_LIGHT: Record<string, string> = {
   'SEO': 'bg-green-100',
   'Atendimento': 'bg-orange-100',
   'Criação': 'bg-pink-100',
+  'CRM': 'bg-cyan-100',
+  'Liderança': 'bg-slate-100',
 }
 
 export const MONTHS_PT = [

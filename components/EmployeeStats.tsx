@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Employee, EmployeeStats as Stats } from '@/lib/types'
 import { AREA_BG_LIGHT, AREA_TEXT_COLORS, AREA_COLORS, formatDate } from '@/lib/utils'
 
-const AREAS = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação']
+const AREAS = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
 
 interface Props {
   stats: Stats[]

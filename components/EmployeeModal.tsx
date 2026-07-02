@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Area, Employee } from '@/lib/types'
 import { AREA_COLORS, formatDate } from '@/lib/utils'
 
-const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação']
+const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
 
 interface Props {
   onClose: () => void

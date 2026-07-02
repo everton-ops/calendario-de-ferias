@@ -5,7 +5,7 @@ import { Employee, VacationRecord, CustomHoliday } from '@/lib/types'
 import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, resolveCustomDates } from '@/lib/utils'
 import { countWorkingDays } from '@/lib/holidays'
 
-const AREAS = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação'] as const
+const AREAS = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança'] as const
 
 interface Props {
   employees: Employee[]

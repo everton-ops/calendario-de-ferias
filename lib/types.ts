@@ -1,4 +1,4 @@
-export type Area = 'Estratégia' | 'Mídia' | 'SEO' | 'Atendimento' | 'Criação'
+export type Area = 'Estratégia' | 'Mídia' | 'SEO' | 'Atendimento' | 'Criação' | 'CRM' | 'Liderança'
 
 export type RecordType = 'ferias' | 'dayoff'
 

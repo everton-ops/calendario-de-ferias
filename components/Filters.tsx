@@ -3,7 +3,7 @@
 import { Area, Employee } from '@/lib/types'
 import { AREA_COLORS } from '@/lib/utils'
 
-const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação']
+const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 interface FiltersProps {
