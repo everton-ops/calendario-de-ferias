@@ -18,11 +18,13 @@ export function resolveCustomDates(customHolidays: CustomHoliday[], year: number
   const dates: string[] = []
   customHolidays.forEach(h => {
     const startStr = h.recurring ? `${year}-${h.date.slice(5)}` : h.date
-    if (!h.recurring && !startStr.startsWith(String(year))) return
     if (h.endDate) {
       const endStr = h.recurring ? `${year}-${h.endDate.slice(5)}` : h.endDate
+      // Inclui se o período tem sobreposição com o ano
+      if (endStr < `${year}-01-01` || startStr > `${year}-12-31`) return
       dates.push(...expandDates(startStr, endStr, year))
     } else {
+      if (!h.recurring && !startStr.startsWith(String(year))) return
       dates.push(startStr)
     }
   })
@@ -35,8 +37,8 @@ export function resolveCustomRangeDates(customHolidays: CustomHoliday[], year: n
   customHolidays.forEach(h => {
     if (!h.endDate) return
     const startStr = h.recurring ? `${year}-${h.date.slice(5)}` : h.date
-    if (!h.recurring && !startStr.startsWith(String(year))) return
     const endStr = h.recurring ? `${year}-${h.endDate.slice(5)}` : h.endDate
+    if (endStr < `${year}-01-01` || startStr > `${year}-12-31`) return
     expandDates(startStr, endStr, year).forEach(d => set.add(d))
   })
   return set
