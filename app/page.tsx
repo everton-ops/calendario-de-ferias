@@ -12,6 +12,7 @@ import EmployeeStatsPanel from '@/components/EmployeeStats'
 import EmployeeModal from '@/components/EmployeeModal'
 import VacationModal from '@/components/VacationModal'
 import CustomHolidayModal from '@/components/CustomHolidayModal'
+import VacationSuggestionModal from '@/components/VacationSuggestionModal'
 
 export default function Home() {
   const currentYear = new Date().getFullYear()
@@ -38,6 +39,7 @@ export default function Home() {
   const [preselectedEmpId, setPreselectedEmpId] = useState<string | undefined>()
 
   const [showHolidayModal, setShowHolidayModal] = useState(false)
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false)
   const router = useRouter()
 
   async function handleLogout() {
@@ -114,6 +116,12 @@ export default function Home() {
               title="Sair"
             >
               Sair
+            </button>
+            <button
+              onClick={() => setShowSuggestionModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
+            >
+              💡 Sugerir período
             </button>
             <button
               onClick={() => setShowHolidayModal(true)}
@@ -203,6 +211,20 @@ export default function Home() {
           onClose={() => { setShowVacationModal(false); setEditingRecord(null) }}
           onSave={handleSaveRecord}
           onDelete={removeRecord}
+        />
+      )}
+
+      {showSuggestionModal && (
+        <VacationSuggestionModal
+          employees={employees}
+          records={records}
+          customHolidays={customHolidays}
+          year={year}
+          onClose={() => setShowSuggestionModal(false)}
+          onApply={(record) => {
+            addRecord({ ...record, id: crypto.randomUUID() })
+            setShowSuggestionModal(false)
+          }}
         />
       )}
 
