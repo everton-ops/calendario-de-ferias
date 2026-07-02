@@ -81,8 +81,8 @@ export default function MonthView({ year, month, employees, records, customHolid
               key={dateStr}
               onClick={() => setPopoverDay(popoverDay === dateStr ? null : dateStr)}
               className={`min-h-24 p-1.5 border-b border-r border-gray-100 flex flex-col gap-1 cursor-pointer transition-colors ${
-                isNational    ? 'bg-red-50 hover:bg-red-100/60' :
-                isCustomRange ? 'bg-red-50 hover:bg-red-100/60' :
+                isNational    ? 'bg-red-100 hover:bg-red-200/60' :
+                isCustomRange ? 'bg-red-100 hover:bg-red-200/60' :
                 isCustom      ? 'bg-violet-50 hover:bg-violet-100/60' :
                 isWknd        ? 'bg-gray-50 hover:bg-gray-100/60' :
                 'bg-white hover:bg-gray-50/80'
@@ -91,8 +91,8 @@ export default function MonthView({ year, month, employees, records, customHolid
               <div className="flex items-center justify-between">
                 <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${
                   isToday       ? 'bg-blue-600 text-white' :
-                  isNational    ? 'bg-red-100 text-red-600' :
-                  isCustomRange ? 'bg-red-100 text-red-600' :
+                  isNational    ? 'bg-red-200 text-red-700' :
+                  isCustomRange ? 'bg-red-200 text-red-700' :
                   isCustom      ? 'bg-violet-100 text-violet-600' :
                   isWknd        ? 'text-gray-400' :
                   'text-gray-700'
@@ -102,7 +102,7 @@ export default function MonthView({ year, month, employees, records, customHolid
               </div>
 
               {holName && (
-                <span className={`text-xs font-medium leading-tight ${isNational || isCustomRange ? 'text-red-500' : 'text-violet-600'}`}>
+                <span className={`text-xs font-medium leading-tight ${isNational || isCustomRange ? 'text-red-700' : 'text-violet-600'}`}>
                   {holName}
                 </span>
               )}
