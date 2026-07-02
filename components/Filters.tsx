@@ -50,7 +50,7 @@ export default function Filters({
 
   return (
     <div className="sticky top-0 z-20">
-      <div className="flex flex-nowrap gap-3 items-center bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-sm overflow-x-auto">
+      <div className="flex flex-nowrap gap-3 items-center bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
         {/* Ano */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ano</span>
@@ -123,38 +123,27 @@ export default function Filters({
           </>
         )}
 
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-6 bg-gray-200 shrink-0" />
 
         {/* Área */}
-        <div className="flex items-center gap-2 flex-nowrap shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Área</span>
-          <button
-            onClick={() => { onAreaChange('Todas'); onEmployeeChange('Todos') }}
-            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-              selectedArea === 'Todas' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+          <select
+            value={selectedArea}
+            onChange={e => { onAreaChange(e.target.value as Area | 'Todas'); onEmployeeChange('Todos') }}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
           >
-            Todas
-          </button>
-          {AREAS.map(area => (
-            <button
-              key={area}
-              onClick={() => { onAreaChange(area); onEmployeeChange('Todos') }}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                selectedArea === area
-                  ? `${AREA_COLORS[area]} text-white`
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {area}
-            </button>
-          ))}
+            <option value="Todas">Todas</option>
+            {AREAS.map(a => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-6 bg-gray-200 shrink-0" />
 
         {/* Funcionário */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Funcionário</span>
           <select
             value={selectedEmployee}
