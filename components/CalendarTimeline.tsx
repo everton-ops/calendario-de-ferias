@@ -1,7 +1,7 @@
 'use client'
 
 import { CustomHoliday, Employee, VacationRecord } from '@/lib/types'
-import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, getDaysInMonth, MONTHS_PT, resolveCustomDates, customHolidayMap } from '@/lib/utils'
+import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, getDaysInMonth, MONTHS_PT, resolveCustomDates, customHolidayMap, formatDate } from '@/lib/utils'
 import { getHolidays, isWeekend } from '@/lib/holidays'
 import { useMemo, useState } from 'react'
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function CalendarTimeline({ year, employees, records, customHolidays, onRecordClick }: Props) {
-  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
+  const [tooltip, setTooltip] = useState<{ lines: string[]; x: number; y: number } | null>(null)
 
   const customDates = useMemo(() => resolveCustomDates(customHolidays, year), [customHolidays, year])
   const customNames = useMemo(() => customHolidayMap(customHolidays, year), [customHolidays, year])
@@ -26,7 +26,32 @@ export default function CalendarTimeline({ year, employees, records, customHolid
     days: getDaysInMonth(year, i),
   }))
 
-  function getCellStatus(employeeId: string, dateStr: string) {
+  // Precompute overlapping days per area (2+ employees from same area on same day)
+  const overlapSet = useMemo(() => {
+    const dayAreaCount: Record<string, Record<string, number>> = {}
+    records.forEach(r => {
+      if (r.type !== 'ferias') return
+      const emp = employees.find(e => e.id === r.employeeId)
+      if (!emp) return
+      let d = new Date(r.startDate + 'T12:00:00')
+      const end = new Date(r.endDate + 'T12:00:00')
+      while (d <= end) {
+        const ds = d.toISOString().split('T')[0]
+        if (!dayAreaCount[ds]) dayAreaCount[ds] = {}
+        dayAreaCount[ds][emp.area] = (dayAreaCount[ds][emp.area] ?? 0) + 1
+        d.setDate(d.getDate() + 1)
+      }
+    })
+    const set = new Set<string>()
+    Object.entries(dayAreaCount).forEach(([date, areas]) => {
+      Object.entries(areas).forEach(([area, count]) => {
+        if (count > 1) set.add(`${area}||${date}`)
+      })
+    })
+    return set
+  }, [records, employees])
+
+  function getCellRecord(employeeId: string, dateStr: string) {
     return records.find(r =>
       r.employeeId === employeeId &&
       dateStr >= r.startDate &&
@@ -57,6 +82,9 @@ export default function CalendarTimeline({ year, employees, records, customHolid
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-gray-100 inline-block border border-gray-200" />Fim de semana
         </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-blue-400 ring-2 ring-red-500 inline-block" />Sobreposição de área
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -85,7 +113,6 @@ export default function CalendarTimeline({ year, employees, records, customHolid
                   const isWknd = isWeekend(dateStr)
                   const isNational = (HOLIDAYS_SET[year] ?? new Set()).has(dateStr)
                   const isCustom = customDates.includes(dateStr)
-                  const isHol = holidays.has(dateStr)
                   return (
                     <th
                       key={dateStr}
@@ -124,22 +151,30 @@ export default function CalendarTimeline({ year, employees, records, customHolid
                       const isWknd = isWeekend(dateStr)
                       const isNational = (HOLIDAYS_SET[year] ?? new Set()).has(dateStr)
                       const isCustom = customDates.includes(dateStr)
-                      const record = getCellStatus(emp.id, dateStr)
+                      const record = getCellRecord(emp.id, dateStr)
+                      const hasOverlap = record?.type === 'ferias' && overlapSet.has(`${emp.area}||${dateStr}`)
 
                       let cellClass = ''
-                      let tooltipText = ''
+                      let tooltipLines: string[] = []
 
                       if (record?.type === 'ferias') {
                         cellClass = 'bg-blue-400'
-                        tooltipText = `${emp.name} — Férias`
+                        tooltipLines = [
+                          `${emp.name} — Férias`,
+                          `${formatDate(record.startDate)} → ${formatDate(record.endDate)}`,
+                        ]
+                        if (hasOverlap) tooltipLines.push('⚠️ Sobreposição na área')
                       } else if (record?.type === 'dayoff') {
                         cellClass = 'bg-amber-400'
-                        tooltipText = `${emp.name} — Day off`
+                        tooltipLines = [
+                          `${emp.name} — Day off`,
+                          `${formatDate(record.startDate)} → ${formatDate(record.endDate)}`,
+                        ]
                       } else if (isNational) {
                         cellClass = 'bg-red-100'
                       } else if (isCustom) {
                         cellClass = 'bg-violet-100'
-                        tooltipText = customNames[dateStr] ?? 'Data especial'
+                        tooltipLines = [customNames[dateStr] ?? 'Data especial']
                       } else if (isWknd) {
                         cellClass = 'bg-gray-100'
                       }
@@ -147,12 +182,12 @@ export default function CalendarTimeline({ year, employees, records, customHolid
                       return (
                         <td
                           key={dateStr}
-                          className={`w-5 min-w-5 h-8 border-b border-gray-100 ${record ? 'cursor-pointer hover:opacity-75' : 'cursor-default'} ${cellClass} ${day === 1 ? 'border-l border-gray-200' : ''}`}
+                          className={`w-5 min-w-5 h-8 border-b border-gray-100 ${record ? 'cursor-pointer hover:opacity-75' : 'cursor-default'} ${cellClass} ${day === 1 ? 'border-l border-gray-200' : ''} ${hasOverlap ? 'ring-2 ring-inset ring-red-500' : ''}`}
                           onClick={() => record && onRecordClick(record)}
                           onMouseEnter={e => {
-                            if (tooltipText) {
+                            if (tooltipLines.length > 0) {
                               const rect = (e.target as HTMLElement).getBoundingClientRect()
-                              setTooltip({ text: tooltipText, x: rect.left, y: rect.top })
+                              setTooltip({ lines: tooltipLines, x: rect.left, y: rect.top })
                             }
                           }}
                           onMouseLeave={() => setTooltip(null)}
@@ -169,17 +204,18 @@ export default function CalendarTimeline({ year, employees, records, customHolid
 
       {tooltip && (
         <div
-          className="fixed z-50 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg pointer-events-none"
-          style={{ top: tooltip.y - 32, left: tooltip.x }}
+          className="fixed z-50 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg pointer-events-none flex flex-col gap-0.5"
+          style={{ top: tooltip.y - 8 - (tooltip.lines.length * 18), left: tooltip.x }}
         >
-          {tooltip.text}
+          {tooltip.lines.map((line, i) => (
+            <span key={i} className={i === 0 ? 'font-semibold' : 'text-gray-300'}>{line}</span>
+          ))}
         </div>
       )}
     </div>
   )
 }
 
-// Importado inline para distinguir nacionais de customizados visualmente
 import { getHolidays as _gh } from '@/lib/holidays'
 const HOLIDAYS_SET: Record<number, Set<string>> = {}
 for (let y = 2025; y <= 2030; y++) HOLIDAYS_SET[y] = _gh(y)

@@ -21,6 +21,7 @@ function daysUntil(dateStr: string): number {
 
 export default function EmployeeModal({ onClose, onSave, initial }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
+  const [role, setRole] = useState(initial?.role ?? '')
   const [area, setArea] = useState<Area>(initial?.area ?? 'Estratégia')
   const [totalDays, setTotalDays] = useState(initial?.totalVacationDays ?? 30)
   const [deadline, setDeadline] = useState(initial?.vacationDeadline ?? '')
@@ -59,6 +60,7 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
     onSave({
       id: initial?.id ?? `emp-${Date.now()}`,
       name: name.trim(),
+      role: role.trim() || undefined,
       area,
       totalVacationDays: totalDays,
       vacationDeadline: deadline || undefined,
@@ -92,6 +94,20 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder:text-gray-400"
             />
             {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
+
+          {/* Cargo/Função */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700">
+              Cargo / Função <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <input
+              type="text"
+              value={role}
+              onChange={e => setRole(e.target.value)}
+              placeholder="Ex: Analista de Mídia, Designer Senior..."
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder:text-gray-400"
+            />
           </div>
 
           {/* Área */}

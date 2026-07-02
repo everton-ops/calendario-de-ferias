@@ -13,6 +13,8 @@ import EmployeeModal from '@/components/EmployeeModal'
 import VacationModal from '@/components/VacationModal'
 import CustomHolidayModal from '@/components/CustomHolidayModal'
 import VacationSuggestionModal from '@/components/VacationSuggestionModal'
+import EmployeeHistoryModal from '@/components/EmployeeHistoryModal'
+import AreaDashboard from '@/components/AreaDashboard'
 
 export default function Home() {
   const currentYear = new Date().getFullYear()
@@ -40,6 +42,9 @@ export default function Home() {
 
   const [showHolidayModal, setShowHolidayModal] = useState(false)
   const [showSuggestionModal, setShowSuggestionModal] = useState(false)
+
+  const [historyEmployee, setHistoryEmployee] = useState<Employee | null>(null)
+
   const router = useRouter()
 
   async function handleLogout() {
@@ -109,14 +114,7 @@ export default function Home() {
             <h1 className="text-xl font-bold text-gray-900">Calendário de Férias</h1>
             <p className="text-sm text-gray-500">Gestão de férias e day offs por área</p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-              title="Sair"
-            >
-              Sair
-            </button>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSuggestionModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
@@ -148,6 +146,14 @@ export default function Home() {
               <span className="text-lg leading-none">+</span>
               Novo funcionário
             </button>
+            <div className="w-px h-6 bg-gray-200 mx-1" />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              title="Sair"
+            >
+              Sair
+            </button>
           </div>
         </div>
       </header>
@@ -167,11 +173,22 @@ export default function Home() {
           onMonthChange={setSelectedMonth}
         />
 
+        {employees.length > 0 && (
+          <AreaDashboard
+            employees={employees}
+            records={records}
+            customHolidays={customHolidays}
+            year={year}
+            month={selectedMonth}
+          />
+        )}
+
         <EmployeeStatsPanel
           stats={stats}
           onEdit={handleEditEmployee}
           onRemove={handleRemoveEmployee}
           onAddRecord={openNewVacation}
+          onViewHistory={setHistoryEmployee}
         />
 
         {view === 'timeline' ? (
@@ -190,6 +207,7 @@ export default function Home() {
             records={records}
             customHolidays={customHolidays}
             onRecordClick={openEditRecord}
+            onAddRecord={() => openNewVacation()}
           />
         )}
       </main>
@@ -214,6 +232,17 @@ export default function Home() {
         />
       )}
 
+      {showHolidayModal && (
+        <CustomHolidayModal
+          holidays={customHolidays}
+          year={year}
+          onClose={() => setShowHolidayModal(false)}
+          onAdd={addCustomHoliday}
+          onUpdate={updateCustomHoliday}
+          onRemove={removeCustomHoliday}
+        />
+      )}
+
       {showSuggestionModal && (
         <VacationSuggestionModal
           employees={employees}
@@ -228,14 +257,20 @@ export default function Home() {
         />
       )}
 
-      {showHolidayModal && (
-        <CustomHolidayModal
-          holidays={customHolidays}
-          year={year}
-          onClose={() => setShowHolidayModal(false)}
-          onAdd={addCustomHoliday}
-          onUpdate={updateCustomHoliday}
-          onRemove={removeCustomHoliday}
+      {historyEmployee && (
+        <EmployeeHistoryModal
+          employee={historyEmployee}
+          records={records}
+          onClose={() => setHistoryEmployee(null)}
+          onEdit={(record) => {
+            setHistoryEmployee(null)
+            openEditRecord(record)
+          }}
+          onDelete={(id) => {
+            removeRecord(id)
+            const updated = employees.find(e => e.id === historyEmployee.id)
+            if (updated) setHistoryEmployee(updated)
+          }}
         />
       )}
     </div>
