@@ -66,20 +66,54 @@ export function customHolidayMap(customHolidays: CustomHoliday[], year: number):
   return map
 }
 
+// Calcula o período vigente efetivo para um funcionário num dado ano
+export function getEffectivePeriod(employee: Employee, year: number): { start: string; end: string } | null {
+  if (!employee.periodStart || !employee.periodEnd) return null
+
+  if (employee.periodRecurring) {
+    const startMmDd = employee.periodStart.slice(5)
+    const endMmDd = employee.periodEnd.slice(5)
+    const start = `${year}-${startMmDd}`
+    // Se o mês/dia do fim é anterior ao do início, o período atravessa o ano-virada
+    const end = endMmDd < startMmDd ? `${year + 1}-${endMmDd}` : `${year}-${endMmDd}`
+    return { start, end }
+  }
+
+  return { start: employee.periodStart, end: employee.periodEnd }
+}
+
+// Conta apenas os dias do registro que caem dentro do período vigente
+function countDaysInPeriod(record: VacationRecord, periodStart: string, periodEnd: string): number {
+  const effectiveStart = record.startDate > periodStart ? record.startDate : periodStart
+  const effectiveEnd = record.endDate < periodEnd ? record.endDate : periodEnd
+  if (effectiveStart > effectiveEnd) return 0
+  return countCalendarDays(effectiveStart, effectiveEnd)
+}
+
 export function getEmployeeStats(
   employee: Employee,
   records: VacationRecord[],
   year: number
 ): EmployeeStats {
-  const employeeRecords = records.filter(
-    (r) => r.employeeId === employee.id && r.startDate.startsWith(String(year))
-  )
+  const period = getEffectivePeriod(employee, year)
+
+  const employeeRecords = records.filter(r => {
+    if (r.employeeId !== employee.id) return false
+    if (period) {
+      // Inclui registros que se sobrepõem ao período vigente
+      return r.startDate <= period.end && r.endDate >= period.start
+    }
+    return r.startDate.startsWith(String(year))
+  })
 
   const usedVacationDays = employeeRecords
-    .filter((r) => r.type === 'ferias')
-    .reduce((sum, r) => sum + countCalendarDays(r.startDate, r.endDate), 0)
+    .filter(r => r.type === 'ferias')
+    .reduce((sum, r) => {
+      if (period) return sum + countDaysInPeriod(r, period.start, period.end)
+      return sum + countCalendarDays(r.startDate, r.endDate)
+    }, 0)
 
-  const usedDayOffs = employeeRecords.filter((r) => r.type === 'dayoff').length
+  const usedDayOffs = employeeRecords.filter(r => r.type === 'dayoff').length
 
   return {
     employee,

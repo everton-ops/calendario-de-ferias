@@ -9,6 +9,9 @@ export interface Employee {
   role?: string              // cargo/função
   totalVacationDays: number  // direito anual (padrão 30)
   vacationDeadline?: string  // ISO yyyy-mm-dd — data limite para tirar férias
+  periodStart?: string       // início do período vigente (ISO yyyy-mm-dd)
+  periodEnd?: string         // fim do período vigente (ISO yyyy-mm-dd)
+  periodRecurring?: boolean  // replicar período para todos os anos
 }
 
 export interface VacationRecord {

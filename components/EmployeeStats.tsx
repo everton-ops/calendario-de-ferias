@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { Employee, EmployeeStats as Stats } from '@/lib/types'
-import { AREA_BG_LIGHT, AREA_TEXT_COLORS, AREA_COLORS, formatDate } from '@/lib/utils'
+import { AREA_BG_LIGHT, AREA_TEXT_COLORS, AREA_COLORS, formatDate, getEffectivePeriod } from '@/lib/utils'
 
 const AREAS = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
 
 interface Props {
   stats: Stats[]
+  year: number
   onEdit: (emp: Employee) => void
   onRemove: (id: string) => void
   onAddRecord: (employeeId: string) => void
@@ -26,7 +27,7 @@ function deadlineInfo(dateStr: string) {
   return { label: `Limite: ${formatDate(dateStr)}`, cls: 'bg-gray-50 text-gray-500' }
 }
 
-export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecord, onViewHistory }: Props) {
+export default function EmployeeStatsPanel({ stats, year, onEdit, onRemove, onAddRecord, onViewHistory }: Props) {
   const [groupByArea, setGroupByArea] = useState(false)
 
   if (stats.length === 0) {
@@ -45,6 +46,7 @@ export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecor
     const dl = employee.vacationDeadline ? deadlineInfo(employee.vacationDeadline) : null
     const isCritical = remainingVacationDays > 20
     const barColor = isCritical ? 'bg-orange-400' : areaColor
+    const activePeriod = getEffectivePeriod(employee, year)
 
     return (
       <div
@@ -104,6 +106,12 @@ export default function EmployeeStatsPanel({ stats, onEdit, onRemove, onAddRecor
             <span className={`font-semibold ${isCritical ? 'text-orange-500' : areaText}`}>{pct}% usado</span>
             <span className={`${isCritical ? 'text-orange-500 font-semibold' : 'text-gray-400'}`}>{remainingVacationDays} restam</span>
           </div>
+          {activePeriod && (
+            <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+              <span>📅</span>
+              <span>{formatDate(activePeriod.start)} → {formatDate(activePeriod.end)}{employee.periodRecurring ? ' (anual)' : ''}</span>
+            </div>
+          )}
         </div>
 
         {dl && (

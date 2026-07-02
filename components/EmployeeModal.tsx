@@ -25,6 +25,9 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
   const [area, setArea] = useState<Area>(initial?.area ?? 'Estratégia')
   const [totalDays, setTotalDays] = useState(initial?.totalVacationDays ?? 30)
   const [deadline, setDeadline] = useState(initial?.vacationDeadline ?? '')
+  const [periodStart, setPeriodStart] = useState(initial?.periodStart ?? '')
+  const [periodEnd, setPeriodEnd] = useState(initial?.periodEnd ?? '')
+  const [periodRecurring, setPeriodRecurring] = useState(initial?.periodRecurring ?? false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -64,6 +67,9 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
       area,
       totalVacationDays: totalDays,
       vacationDeadline: deadline || undefined,
+      periodStart: periodStart || undefined,
+      periodEnd: periodEnd || undefined,
+      periodRecurring: (periodStart && periodEnd) ? periodRecurring : undefined,
     })
     onClose()
   }
@@ -73,7 +79,7 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 flex flex-col max-h-[90vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">
             {initial ? 'Editar funcionário' : 'Novo funcionário'}
@@ -81,7 +87,7 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors text-xl leading-none">×</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-5 overflow-y-auto">
           {/* Nome */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700">Nome completo</label>
@@ -176,6 +182,58 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
                 className="text-xs text-gray-400 hover:text-gray-600 self-start underline underline-offset-2"
               >
                 Remover data limite
+              </button>
+            )}
+          </div>
+
+          {/* Período vigente */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Período vigente de férias</label>
+              <span className="text-gray-400 text-xs font-normal">(opcional)</span>
+            </div>
+            <p className="text-xs text-gray-400">
+              Define o intervalo em que as férias devem ser usufruídas. O saldo exibido reflete apenas os dias dentro deste período.
+            </p>
+            <div className="flex gap-3">
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-xs text-gray-500">Início do período</label>
+                <input
+                  type="date"
+                  value={periodStart}
+                  onChange={e => { setPeriodStart(e.target.value); if (!e.target.value) { setPeriodEnd(''); setPeriodRecurring(false) } }}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-xs text-gray-500">Fim do período</label>
+                <input
+                  type="date"
+                  value={periodEnd}
+                  onChange={e => setPeriodEnd(e.target.value)}
+                  disabled={!periodStart}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-40"
+                />
+              </div>
+            </div>
+            {periodStart && periodEnd && (
+              <label className="flex items-center gap-2.5 cursor-pointer select-none mt-1">
+                <input
+                  type="checkbox"
+                  checked={periodRecurring}
+                  onChange={e => setPeriodRecurring(e.target.checked)}
+                  className="w-4 h-4 accent-gray-800"
+                />
+                <span className="text-xs text-gray-700">Replicar para todos os anos (usa o mesmo dia/mês anualmente)</span>
+              </label>
+            )}
+            {periodStart && (
+              <button
+                type="button"
+                onClick={() => { setPeriodStart(''); setPeriodEnd(''); setPeriodRecurring(false) }}
+                className="text-xs text-gray-400 hover:text-gray-600 self-start underline underline-offset-2"
+              >
+                Remover período vigente
               </button>
             )}
           </div>

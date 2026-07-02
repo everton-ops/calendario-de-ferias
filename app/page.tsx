@@ -185,6 +185,7 @@ export default function Home() {
 
         <EmployeeStatsPanel
           stats={stats}
+          year={year}
           onEdit={handleEditEmployee}
           onRemove={handleRemoveEmployee}
           onAddRecord={openNewVacation}

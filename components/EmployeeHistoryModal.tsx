@@ -1,8 +1,7 @@
 'use client'
 
 import { Employee, VacationRecord } from '@/lib/types'
-import { formatDate, AREA_BG_LIGHT, AREA_TEXT_COLORS } from '@/lib/utils'
-import { countCalendarDays } from '@/lib/utils'
+import { formatDate, AREA_BG_LIGHT, AREA_TEXT_COLORS, countCalendarDays } from '@/lib/utils'
 
 interface Props {
   employee: Employee
@@ -62,6 +61,15 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
             <div className="flex flex-col">
               <span className="text-xs text-gray-500">Data limite</span>
               <span className="text-sm font-semibold text-orange-600">{formatDate(employee.vacationDeadline)}</span>
+            </div>
+          )}
+          {employee.periodStart && employee.periodEnd && (
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">Período vigente</span>
+              <span className="text-sm font-semibold text-indigo-600">
+                {formatDate(employee.periodStart)} → {formatDate(employee.periodEnd)}
+                {employee.periodRecurring && <span className="text-xs font-normal text-gray-400 ml-1">(anual)</span>}
+              </span>
             </div>
           )}
         </div>
