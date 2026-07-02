@@ -1,7 +1,7 @@
 'use client'
 
 import { CustomHoliday, Employee, VacationRecord } from '@/lib/types'
-import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, getDaysInMonth, MONTHS_PT, resolveCustomDates, customHolidayMap, formatDate } from '@/lib/utils'
+import { AREA_COLORS, AREA_BG_LIGHT, AREA_TEXT_COLORS, getDaysInMonth, MONTHS_PT, resolveCustomDates, resolveCustomRangeDates, customHolidayMap, formatDate } from '@/lib/utils'
 import { getHolidays, isWeekend } from '@/lib/holidays'
 import { useMemo, useState } from 'react'
 
@@ -17,6 +17,7 @@ export default function CalendarTimeline({ year, employees, records, customHolid
   const [tooltip, setTooltip] = useState<{ lines: string[]; x: number; y: number } | null>(null)
 
   const customDates = useMemo(() => resolveCustomDates(customHolidays, year), [customHolidays, year])
+  const customRangeDates = useMemo(() => resolveCustomRangeDates(customHolidays, year), [customHolidays, year])
   const customNames = useMemo(() => customHolidayMap(customHolidays, year), [customHolidays, year])
   const holidays = useMemo(() => getHolidays(year, customDates), [year, customDates])
 
@@ -112,15 +113,17 @@ export default function CalendarTimeline({ year, employees, records, customHolid
                   const dateStr = `${year}-${padded(month.index + 1)}-${padded(day)}`
                   const isWknd = isWeekend(dateStr)
                   const isNational = (HOLIDAYS_SET[year] ?? new Set()).has(dateStr)
+                  const isCustomRange = customRangeDates.has(dateStr)
                   const isCustom = customDates.includes(dateStr)
                   return (
                     <th
                       key={dateStr}
                       title={isCustom ? customNames[dateStr] : undefined}
                       className={`w-5 min-w-5 text-center py-1 font-normal border-b border-gray-200 ${
-                        isNational ? 'bg-red-100 text-red-600' :
-                        isCustom   ? 'bg-violet-100 text-violet-600' :
-                        isWknd     ? 'bg-gray-50 text-gray-400' :
+                        isNational    ? 'bg-red-100 text-red-600' :
+                        isCustomRange ? 'bg-red-100 text-red-600' :
+                        isCustom      ? 'bg-violet-100 text-violet-600' :
+                        isWknd        ? 'bg-gray-50 text-gray-400' :
                         'text-gray-400'
                       } ${day === 1 ? 'border-l border-gray-200' : ''}`}
                     >
@@ -150,6 +153,7 @@ export default function CalendarTimeline({ year, employees, records, customHolid
                       const dateStr = `${year}-${padded(month.index + 1)}-${padded(day)}`
                       const isWknd = isWeekend(dateStr)
                       const isNational = (HOLIDAYS_SET[year] ?? new Set()).has(dateStr)
+                      const isCustomRange = customRangeDates.has(dateStr)
                       const isCustom = customDates.includes(dateStr)
                       const record = getCellRecord(emp.id, dateStr)
                       const hasOverlap = record?.type === 'ferias' && overlapSet.has(`${emp.area}||${dateStr}`)
@@ -172,6 +176,9 @@ export default function CalendarTimeline({ year, employees, records, customHolid
                         ]
                       } else if (isNational) {
                         cellClass = 'bg-red-100'
+                      } else if (isCustomRange) {
+                        cellClass = 'bg-red-100'
+                        tooltipLines = [customNames[dateStr] ?? 'Período bloqueado']
                       } else if (isCustom) {
                         cellClass = 'bg-violet-100'
                         tooltipLines = [customNames[dateStr] ?? 'Data especial']

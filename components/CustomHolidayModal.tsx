@@ -34,7 +34,7 @@ interface Props {
   year: number
 }
 
-const EMPTY_FORM = { name: '', date: '', type: 'regional' as CustomHolidayType, recurring: false }
+const EMPTY_FORM = { name: '', date: '', endDate: '', type: 'regional' as CustomHolidayType, recurring: false }
 
 export default function CustomHolidayModal({ holidays, onClose, onAdd, onUpdate, onRemove, year }: Props) {
   const [form, setForm] = useState(EMPTY_FORM)
@@ -50,7 +50,7 @@ export default function CustomHolidayModal({ holidays, onClose, onAdd, onUpdate,
 
   function startEdit(h: CustomHoliday) {
     setEditing(h)
-    setForm({ name: h.name, date: h.date, type: h.type, recurring: h.recurring })
+    setForm({ name: h.name, date: h.date, endDate: h.endDate ?? '', type: h.type, recurring: h.recurring })
     setTab('new')
   }
 
@@ -63,23 +63,20 @@ export default function CustomHolidayModal({ holidays, onClose, onAdd, onUpdate,
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name.trim()) { setError('Informe o nome da data.'); return }
-    if (!form.date) { setError('Informe a data.'); return }
-
-    const duplicate = holidays.find(h =>
-      h.date === form.date && (!editing || h.id !== editing.id)
-    )
-    if (duplicate) { setError(`Já existe "${duplicate.name}" nessa data.`); return }
+    if (!form.date) { setError('Informe a data de início.'); return }
+    if (form.endDate && form.endDate < form.date) {
+      setError('A data de fim deve ser igual ou posterior à data de início.'); return
+    }
 
     if (editing) {
-      onUpdate({ ...editing, ...form, name: form.name.trim() })
+      onUpdate({ ...editing, ...form, endDate: form.endDate || undefined, name: form.name.trim() })
     } else {
-      onAdd({ id: `ch-${Date.now()}`, ...form, name: form.name.trim() })
+      onAdd({ id: `ch-${Date.now()}`, ...form, endDate: form.endDate || undefined, name: form.name.trim() })
     }
     resetForm()
     setTab('list')
   }
 
-  // Sort holidays by date for display
   const visibleHolidays = [...holidays].sort((a, b) => {
     const dateA = a.recurring ? `${year}-${a.date.slice(5)}` : a.date
     const dateB = b.recurring ? `${year}-${b.date.slice(5)}` : b.date
@@ -128,16 +125,21 @@ export default function CustomHolidayModal({ holidays, onClose, onAdd, onUpdate,
               <ul className="divide-y divide-gray-50">
                 {visibleHolidays.map(h => (
                   <li key={h.id} className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 group">
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${TYPE_DOT[h.type]}`} />
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${h.endDate ? 'bg-red-400' : TYPE_DOT[h.type]}`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-800 truncate">{h.name}</span>
                         {h.recurring && (
                           <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">↺ anual</span>
                         )}
+                        {h.endDate && (
+                          <span className="text-xs text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full">período</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-gray-500">{formatDate(h.date)}</span>
+                        <span className="text-xs text-gray-500">
+                          {formatDate(h.date)}{h.endDate ? ` → ${formatDate(h.endDate)}` : ''}
+                        </span>
                         <span className={`text-xs px-1.5 py-0.5 rounded-full border ${TYPE_COLORS[h.type]}`}>
                           {TYPE_LABELS[h.type]}
                         </span>
@@ -173,7 +175,7 @@ export default function CustomHolidayModal({ holidays, onClose, onAdd, onUpdate,
                 type="text"
                 value={form.name}
                 onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setError('') }}
-                placeholder="Ex: Recesso de fim de ano, Feriado municipal..."
+                placeholder="Ex: Mês de Black Friday, Recesso de fim de ano..."
                 autoFocus
                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder:text-gray-400"
               />
@@ -200,16 +202,36 @@ export default function CustomHolidayModal({ holidays, onClose, onAdd, onUpdate,
               </div>
             </div>
 
-            {/* Data */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">Data</label>
-              <input
-                type="date"
-                value={form.date}
-                onChange={e => { setForm(f => ({ ...f, date: e.target.value })); setError('') }}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              />
+            {/* Datas */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Data de início</label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={e => { setForm(f => ({ ...f, date: e.target.value })); setError('') }}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">
+                  Data de fim <span className="text-gray-400 font-normal">(opcional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={form.endDate}
+                  min={form.date || undefined}
+                  onChange={e => { setForm(f => ({ ...f, endDate: e.target.value })); setError('') }}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                />
+              </div>
             </div>
+
+            {form.endDate && (
+              <div className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 border border-red-100">
+                🔴 Período bloqueado: o calendário ficará em vermelho de <strong>{formatDate(form.date)}</strong> a <strong>{formatDate(form.endDate)}</strong>
+              </div>
+            )}
 
             {/* Recorrente */}
             <label className="flex items-center gap-3 cursor-pointer select-none">

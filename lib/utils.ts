@@ -1,26 +1,59 @@
 import { Employee, VacationRecord, EmployeeStats, CustomHoliday } from './types'
 import { countWorkingDays } from './holidays'
 
-// Resolve datas efetivas dos feriados customizados para um dado ano
-export function resolveCustomDates(customHolidays: CustomHoliday[], year: number): string[] {
-  return customHolidays
-    .map(h => {
-      if (h.recurring) {
-        // Aplica o mês/dia da data original ao ano solicitado
-        const mmdd = h.date.slice(5)
-        return `${year}-${mmdd}`
-      }
-      return h.date.startsWith(String(year)) ? h.date : null
-    })
-    .filter((d): d is string => d !== null)
+function expandDates(startStr: string, endStr: string, year: number): string[] {
+  const dates: string[] = []
+  let d = new Date(startStr + 'T12:00:00')
+  const end = new Date(endStr + 'T12:00:00')
+  while (d <= end) {
+    const ds = d.toISOString().split('T')[0]
+    if (ds.startsWith(String(year))) dates.push(ds)
+    d.setDate(d.getDate() + 1)
+  }
+  return dates
 }
 
-// Retorna mapa de date -> nome para feriados customizados
+// Resolve datas efetivas dos feriados customizados para um dado ano (inclui períodos)
+export function resolveCustomDates(customHolidays: CustomHoliday[], year: number): string[] {
+  const dates: string[] = []
+  customHolidays.forEach(h => {
+    const startStr = h.recurring ? `${year}-${h.date.slice(5)}` : h.date
+    if (!h.recurring && !startStr.startsWith(String(year))) return
+    if (h.endDate) {
+      const endStr = h.recurring ? `${year}-${h.endDate.slice(5)}` : h.endDate
+      dates.push(...expandDates(startStr, endStr, year))
+    } else {
+      dates.push(startStr)
+    }
+  })
+  return dates
+}
+
+// Retorna Set com apenas as datas de períodos (com endDate) — usadas para colorir de vermelho
+export function resolveCustomRangeDates(customHolidays: CustomHoliday[], year: number): Set<string> {
+  const set = new Set<string>()
+  customHolidays.forEach(h => {
+    if (!h.endDate) return
+    const startStr = h.recurring ? `${year}-${h.date.slice(5)}` : h.date
+    if (!h.recurring && !startStr.startsWith(String(year))) return
+    const endStr = h.recurring ? `${year}-${h.endDate.slice(5)}` : h.endDate
+    expandDates(startStr, endStr, year).forEach(d => set.add(d))
+  })
+  return set
+}
+
+// Retorna mapa de date -> nome para feriados customizados (inclui períodos)
 export function customHolidayMap(customHolidays: CustomHoliday[], year: number): Record<string, string> {
   const map: Record<string, string> = {}
   customHolidays.forEach(h => {
-    const dates = resolveCustomDates([h], year)
-    dates.forEach(d => { map[d] = h.name })
+    const startStr = h.recurring ? `${year}-${h.date.slice(5)}` : h.date
+    if (!h.recurring && !startStr.startsWith(String(year))) return
+    if (h.endDate) {
+      const endStr = h.recurring ? `${year}-${h.endDate.slice(5)}` : h.endDate
+      expandDates(startStr, endStr, year).forEach(d => { map[d] = h.name })
+    } else {
+      map[startStr] = h.name
+    }
   })
   return map
 }

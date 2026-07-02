@@ -24,7 +24,8 @@ export type CustomHolidayType = 'regional' | 'sazonal' | 'recesso' | 'outro'
 export interface CustomHoliday {
   id: string
   name: string
-  date: string      // ISO yyyy-mm-dd
+  date: string      // ISO yyyy-mm-dd — data de início
+  endDate?: string  // ISO yyyy-mm-dd — data de fim (quando é um período)
   type: CustomHolidayType
   recurring: boolean // repete todo ano nessa data
 }
