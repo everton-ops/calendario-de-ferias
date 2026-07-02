@@ -79,7 +79,12 @@ export function getEffectivePeriod(employee: Employee, year: number): { start: s
     return { start, end }
   }
 
-  return { start: employee.periodStart, end: employee.periodEnd }
+  // Para períodos fixos (não recorrentes): só usa o período quando o ano selecionado
+  // corresponde ao ano de início do período. Outros anos usam filtro por ano simples.
+  if (Number(employee.periodStart.slice(0, 4)) === year) {
+    return { start: employee.periodStart, end: employee.periodEnd }
+  }
+  return null
 }
 
 // Conta apenas os dias do registro que caem dentro do período vigente
