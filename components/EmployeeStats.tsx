@@ -38,8 +38,9 @@ export default function EmployeeStatsPanel({ stats, year, onEdit, onRemove, onAd
     )
   }
 
-  function renderCard({ employee, usedVacationDays, remainingVacationDays, usedDayOffs }: Stats) {
-    const pct = Math.min(100, Math.round((usedVacationDays / employee.totalVacationDays) * 100))
+  function renderCard({ employee, takenVacationDays, scheduledVacationDays, totalScheduledDays, remainingVacationDays, usedDayOffs }: Stats) {
+    const pctTaken = Math.min(100, Math.round((takenVacationDays / employee.totalVacationDays) * 100))
+    const pctScheduled = Math.min(100, Math.round((totalScheduledDays / employee.totalVacationDays) * 100))
     const areaColor = AREA_COLORS[employee.area]
     const areaBg = AREA_BG_LIGHT[employee.area]
     const areaText = AREA_TEXT_COLORS[employee.area]
@@ -94,20 +95,24 @@ export default function EmployeeStatsPanel({ stats, year, onEdit, onRemove, onAd
           )}
         </div>
 
-        <div className="flex flex-col gap-1">
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>Férias</span>
-            <span className="font-medium text-gray-700">{usedVacationDays}/{employee.totalVacationDays} dias corridos</span>
-          </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+        <div className="flex flex-col gap-1.5">
+          {/* Barra dupla: tirado (sólido) + agendado (tracejado) */}
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden relative">
+            <div className={`h-full rounded-full transition-all absolute left-0 ${barColor}`} style={{ width: `${pctScheduled}%`, opacity: 0.25 }} />
+            <div className={`h-full rounded-full transition-all absolute left-0 ${barColor}`} style={{ width: `${pctTaken}%` }} />
           </div>
           <div className="flex justify-between text-xs">
-            <span className={`font-semibold ${isCritical ? 'text-orange-500' : areaText}`}>{pct}% usado</span>
+            <span className={`font-semibold ${isCritical ? 'text-orange-500' : areaText}`}>{pctTaken}% já tirado</span>
             <span className={`${isCritical ? 'text-orange-500 font-semibold' : 'text-gray-400'}`}>{remainingVacationDays} restam</span>
           </div>
+          <div className="flex justify-between text-xs text-gray-400 border-t border-gray-100 pt-1">
+            <span>Agendado: <span className="font-medium text-gray-600">{totalScheduledDays}d</span></span>
+            {scheduledVacationDays > 0 && (
+              <span className="text-blue-400">+{scheduledVacationDays}d futuro</span>
+            )}
+          </div>
           {activePeriod && (
-            <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+            <div className="text-xs text-gray-400 flex items-center gap-1">
               <span>📅</span>
               <span>{formatDate(activePeriod.start)} → {formatDate(activePeriod.end)}{employee.periodRecurring ? ' (anual)' : ''}</span>
             </div>

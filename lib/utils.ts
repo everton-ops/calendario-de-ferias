@@ -111,19 +111,35 @@ export function getEmployeeStats(
     return r.startDate.startsWith(String(year))
   })
 
-  const usedVacationDays = employeeRecords
-    .filter(r => r.type === 'ferias')
-    .reduce((sum, r) => {
-      if (period) return sum + countDaysInPeriod(r, period.start, period.end)
-      return sum + countCalendarDays(r.startDate, r.endDate)
-    }, 0)
+  const today = new Date().toISOString().split('T')[0]
 
+  function calcDays(r: VacationRecord): number {
+    if (period) return countDaysInPeriod(r, period.start, period.end)
+    return countCalendarDays(r.startDate, r.endDate)
+  }
+
+  const feriasRecords = employeeRecords.filter(r => r.type === 'ferias')
+
+  // Dias já tirados: férias cujo fim já passou (inclusive em andamento)
+  const takenVacationDays = feriasRecords
+    .filter(r => r.endDate <= today)
+    .reduce((sum, r) => sum + calcDays(r), 0)
+
+  // Dias agendados futuros: férias que ainda não começaram
+  const scheduledVacationDays = feriasRecords
+    .filter(r => r.startDate > today)
+    .reduce((sum, r) => sum + calcDays(r), 0)
+
+  const totalScheduledDays = takenVacationDays + scheduledVacationDays
   const usedDayOffs = employeeRecords.filter(r => r.type === 'dayoff').length
 
   return {
     employee,
-    usedVacationDays,
-    remainingVacationDays: employee.totalVacationDays - usedVacationDays,
+    takenVacationDays,
+    scheduledVacationDays,
+    totalScheduledDays,
+    usedVacationDays: totalScheduledDays, // compatibilidade
+    remainingVacationDays: employee.totalVacationDays - totalScheduledDays,
     usedDayOffs,
     records: employeeRecords,
   }

@@ -35,8 +35,11 @@ export interface CustomHoliday {
 
 export interface EmployeeStats {
   employee: Employee
-  usedVacationDays: number
-  remainingVacationDays: number
+  takenVacationDays: number     // dias já tirados (endDate <= hoje)
+  scheduledVacationDays: number // dias agendados futuros (startDate > hoje)
+  totalScheduledDays: number    // takenVacationDays + scheduledVacationDays
+  remainingVacationDays: number // totalVacationDays - totalScheduledDays
+  usedVacationDays: number      // alias de totalScheduledDays (compatibilidade)
   usedDayOffs: number
   records: VacationRecord[]
 }
