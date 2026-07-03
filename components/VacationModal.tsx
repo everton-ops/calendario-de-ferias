@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Area, Employee, RecordType, VacationRecord } from '@/lib/types'
-import { AREA_BG_LIGHT, AREA_TEXT_COLORS } from '@/lib/utils'
-import { countCalendarDays } from '@/lib/utils'
+import { AREA_BG_LIGHT, AREA_TEXT_COLORS, countCalendarDays, getEffectivePeriod } from '@/lib/utils'
 import { isWeekend, isHoliday } from '@/lib/holidays'
 
 const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
@@ -35,6 +34,27 @@ export default function VacationModal({
   const calendarDays = startDate && endDate && endDate >= startDate
     ? countCalendarDays(startDate, endDate)
     : 0
+
+  // Calcula dias já agendados no período vigente (excluindo o registro atual em edição)
+  const activePeriod = selectedEmployee ? getEffectivePeriod(selectedEmployee, year) : null
+
+  const alreadyScheduled = selectedEmployee && type === 'ferias'
+    ? records
+        .filter(r => r.employeeId === selectedEmployee.id && r.type === 'ferias' && (!initial || r.id !== initial.id))
+        .filter(r => activePeriod ? (r.startDate <= activePeriod.end && r.endDate >= activePeriod.start) : r.startDate.startsWith(String(year)))
+        .reduce((sum, r) => {
+          if (activePeriod) {
+            const s = r.startDate > activePeriod.start ? r.startDate : activePeriod.start
+            const e = r.endDate < activePeriod.end ? r.endDate : activePeriod.end
+            return s <= e ? sum + countCalendarDays(s, e) : sum
+          }
+          return sum + countCalendarDays(r.startDate, r.endDate)
+        }, 0)
+    : 0
+
+  const totalAfterSave = alreadyScheduled + calendarDays
+  const limit = selectedEmployee?.totalVacationDays ?? 0
+  const wouldExceed = type === 'ferias' && calendarDays > 0 && totalAfterSave > limit
 
   // For day off, end = start always
   function handleStartChange(val: string) {
@@ -70,6 +90,7 @@ export default function VacationModal({
       if (isHoliday(startDate, d.getFullYear())) return 'Essa data já é feriado nacional.'
     }
     if (hasConflict()) return 'Esse período conflita com outro registro deste funcionário.'
+    if (wouldExceed) return `Limite excedido: o funcionário tem direito a ${limit} dias, já tem ${alreadyScheduled} agendados e este período adicionaria mais ${calendarDays} dias (total: ${totalAfterSave}).`
     return ''
   }
 
@@ -195,11 +216,21 @@ export default function VacationModal({
             )}
           </div>
 
-          {/* Resumo de dias úteis */}
+          {/* Resumo de dias */}
           {type === 'ferias' && calendarDays > 0 && (
-            <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 text-sm">
-              <span className="text-blue-700">Dias corridos no período</span>
-              <span className="font-bold text-blue-800">{calendarDays} dias</span>
+            <div className={`flex flex-col gap-2 rounded-lg px-4 py-3 text-sm border ${wouldExceed ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
+              <div className="flex items-center justify-between">
+                <span className={wouldExceed ? 'text-red-700' : 'text-blue-700'}>Dias corridos neste período</span>
+                <span className={`font-bold ${wouldExceed ? 'text-red-800' : 'text-blue-800'}`}>{calendarDays} dias</span>
+              </div>
+              {selectedEmployee && (
+                <div className="flex items-center justify-between text-xs border-t pt-2 mt-0.5 border-opacity-40" style={{ borderColor: wouldExceed ? '#fca5a5' : '#bfdbfe' }}>
+                  <span className={wouldExceed ? 'text-red-600' : 'text-blue-600'}>
+                    Já agendado: {alreadyScheduled}d · Total após salvar: <strong>{totalAfterSave}d</strong> / {limit}d
+                  </span>
+                  {wouldExceed && <span className="text-red-600 font-bold">⚠️ +{totalAfterSave - limit}d excedido</span>}
+                </div>
+              )}
             </div>
           )}
 
