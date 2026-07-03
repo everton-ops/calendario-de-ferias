@@ -57,19 +57,30 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
     return allEmpRecords.filter(r => r.startDate.startsWith(String(selectedYear)))
   }, [allEmpRecords, activePeriod, selectedYear])
 
-  const totalVacationDays = useMemo(() =>
-    filteredRecords
-      .filter(r => r.type === 'ferias')
-      .reduce((sum, r) => {
-        if (activePeriod) return sum + countDaysInPeriod(r, activePeriod.start, activePeriod.end)
-        return sum + countCalendarDays(r.startDate, r.endDate)
-      }, 0),
-    [filteredRecords, activePeriod]
+  const today = new Date().toISOString().split('T')[0]
+
+  function calcDays(r: VacationRecord): number {
+    if (activePeriod) return countDaysInPeriod(r, activePeriod.start, activePeriod.end)
+    return countCalendarDays(r.startDate, r.endDate)
+  }
+
+  const feriasFiltered = useMemo(() => filteredRecords.filter(r => r.type === 'ferias'), [filteredRecords])
+
+  const takenDays = useMemo(() =>
+    feriasFiltered.filter(r => r.endDate <= today).reduce((sum, r) => sum + calcDays(r), 0),
+    [feriasFiltered, activePeriod]
   )
 
+  const scheduledDays = useMemo(() =>
+    feriasFiltered.filter(r => r.startDate > today).reduce((sum, r) => sum + calcDays(r), 0),
+    [feriasFiltered, activePeriod]
+  )
+
+  const totalScheduled = takenDays + scheduledDays
   const totalDayOffs = filteredRecords.filter(r => r.type === 'dayoff').length
-  const remaining = employee.totalVacationDays - totalVacationDays
-  const pct = Math.min(100, Math.round((totalVacationDays / employee.totalVacationDays) * 100))
+  const remaining = employee.totalVacationDays - totalScheduled
+  const pctTaken = Math.min(100, Math.round((takenDays / employee.totalVacationDays) * 100))
+  const pctScheduled = Math.min(100, Math.round((totalScheduled / employee.totalVacationDays) * 100))
 
   const areaBg = AREA_BG_LIGHT[employee.area]
   const areaText = AREA_TEXT_COLORS[employee.area]
@@ -116,13 +127,19 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
 
         {/* Resumo do período selecionado */}
         <div className="px-6 py-3 border-b border-gray-100">
-          <div className="flex gap-5 mb-2">
+          <div className="flex flex-wrap gap-4 mb-2">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Férias usadas</span>
-              <span className="text-sm font-semibold text-blue-600">{totalVacationDays} dias corridos</span>
+              <span className="text-xs text-gray-500">Férias tiradas</span>
+              <span className="text-sm font-semibold text-blue-600">{takenDays} dias</span>
             </div>
+            {scheduledDays > 0 && (
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">Agendadas</span>
+                <span className="text-sm font-semibold text-indigo-500">{scheduledDays} dias</span>
+              </div>
+            )}
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Restam</span>
+              <span className="text-xs text-gray-500">Restam agendar</span>
               <span className={`text-sm font-semibold ${remaining > 20 ? 'text-orange-500' : 'text-gray-700'}`}>
                 {remaining} dias {remaining > 20 && '⚠️'}
               </span>
@@ -144,13 +161,11 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
               </div>
             )}
           </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${remaining > 20 ? 'bg-orange-400' : 'bg-blue-500'}`}
-              style={{ width: `${pct}%` }}
-            />
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden relative">
+            <div className="h-full rounded-full absolute left-0 bg-indigo-200 transition-all" style={{ width: `${pctScheduled}%` }} />
+            <div className={`h-full rounded-full absolute left-0 transition-all ${remaining > 20 ? 'bg-orange-400' : 'bg-blue-500'}`} style={{ width: `${pctTaken}%` }} />
           </div>
-          <p className="text-xs text-gray-400 mt-1">{pct}% utilizado no período</p>
+          <p className="text-xs text-gray-400 mt-1">{pctTaken}% tirado · {pctScheduled}% comprometido no período</p>
         </div>
 
         {/* Lista de registros */}
