@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Area, Employee } from '@/lib/types'
-import { AREA_COLORS, formatDate } from '@/lib/utils'
+import { AREA_COLORS } from '@/lib/utils'
 
 const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
 
@@ -12,19 +12,12 @@ interface Props {
   initial?: Employee | null
 }
 
-function daysUntil(dateStr: string): number {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(dateStr + 'T00:00:00')
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-}
 
 export default function EmployeeModal({ onClose, onSave, initial }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [role, setRole] = useState(initial?.role ?? '')
   const [area, setArea] = useState<Area>(initial?.area ?? 'Estratégia')
   const [totalDays, setTotalDays] = useState(initial?.totalVacationDays ?? 30)
-  const [deadline, setDeadline] = useState(initial?.vacationDeadline ?? '')
   const [periodStart, setPeriodStart] = useState(initial?.periodStart ?? '')
   const [periodEnd, setPeriodEnd] = useState(initial?.periodEnd ?? '')
   const [periodRecurring, setPeriodRecurring] = useState(initial?.periodRecurring ?? false)
@@ -36,27 +29,6 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const deadlineDays = deadline ? daysUntil(deadline) : null
-  const deadlineStatus =
-    deadlineDays === null ? null :
-    deadlineDays < 0     ? 'vencida' :
-    deadlineDays <= 30   ? 'urgente' :
-    deadlineDays <= 90   ? 'atencao' : 'ok'
-
-  const deadlineColors = {
-    vencida: 'bg-red-50 border-red-200 text-red-600',
-    urgente: 'bg-orange-50 border-orange-200 text-orange-600',
-    atencao: 'bg-yellow-50 border-yellow-200 text-yellow-700',
-    ok:      'bg-green-50 border-green-200 text-green-700',
-  }
-
-  const deadlineMessages = {
-    vencida: `⚠️ Prazo vencido há ${Math.abs(deadlineDays!)} dia(s)`,
-    urgente: `🔴 Vence em ${deadlineDays} dia(s) — urgente`,
-    atencao: `🟡 Vence em ${deadlineDays} dias — atenção`,
-    ok:      `✅ Vence em ${deadlineDays} dias (${formatDate(deadline)})`,
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) { setError('Informe o nome do funcionário.'); return }
@@ -66,7 +38,7 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
       role: role.trim() || undefined,
       area,
       totalVacationDays: totalDays,
-      vacationDeadline: deadline || undefined,
+      vacationDeadline: periodEnd || undefined,
       periodStart: periodStart || undefined,
       periodEnd: periodEnd || undefined,
       periodRecurring: (periodStart && periodEnd) ? periodRecurring : undefined,
@@ -156,34 +128,6 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
                 {totalDays} dias
               </span>
             </div>
-          </div>
-
-          {/* Data limite para tirar férias */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">
-              Data limite para tirar férias
-              <span className="ml-1 text-gray-400 font-normal">(opcional)</span>
-            </label>
-            <input
-              type="date"
-              value={deadline}
-              onChange={e => setDeadline(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-            {deadlineStatus && (
-              <div className={`text-xs px-3 py-2 rounded-lg border font-medium ${deadlineColors[deadlineStatus]}`}>
-                {deadlineMessages[deadlineStatus]}
-              </div>
-            )}
-            {deadline && (
-              <button
-                type="button"
-                onClick={() => setDeadline('')}
-                className="text-xs text-gray-400 hover:text-gray-600 self-start underline underline-offset-2"
-              >
-                Remover data limite
-              </button>
-            )}
           </div>
 
           {/* Período vigente */}
