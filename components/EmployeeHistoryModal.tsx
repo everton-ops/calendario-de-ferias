@@ -27,23 +27,9 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
     [records, employee.id]
   )
 
-  // Determina os anos disponíveis a partir dos registros
-  const availableYears = useMemo(() => {
-    const years = new Set<number>()
-    allEmpRecords.forEach(r => {
-      years.add(Number(r.startDate.slice(0, 4)))
-      years.add(Number(r.endDate.slice(0, 4)))
-    })
-    // Se tem período recorrente, garante que o ano atual também apareça
-    const currentYear = new Date().getFullYear()
-    years.add(currentYear)
-    return Array.from(years).sort((a, b) => b - a)
-  }, [allEmpRecords])
+  const availableYears = [2025, 2026, 2027, 2028, 2029, 2030]
 
-  const [selectedYear, setSelectedYear] = useState<number>(() => {
-    // Padrão: ano com registros mais recentes
-    return availableYears[0] ?? new Date().getFullYear()
-  })
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
 
   const activePeriod = getEffectivePeriod(employee, selectedYear)
 
