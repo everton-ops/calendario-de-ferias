@@ -38,9 +38,9 @@ export default function VacationModal({
   // Calcula dias já agendados no período vigente (excluindo o registro atual em edição)
   const activePeriod = selectedEmployee ? getEffectivePeriod(selectedEmployee, year) : null
 
-  const alreadyScheduled = selectedEmployee && type === 'ferias'
+  const alreadyScheduled = selectedEmployee && (type === 'ferias' || type === 'ferias-vendidas')
     ? records
-        .filter(r => r.employeeId === selectedEmployee.id && r.type === 'ferias' && (!initial || r.id !== initial.id))
+        .filter(r => r.employeeId === selectedEmployee.id && (r.type === 'ferias' || r.type === 'ferias-vendidas') && (!initial || r.id !== initial.id))
         .filter(r => activePeriod ? (r.startDate <= activePeriod.end && r.endDate >= activePeriod.start) : r.startDate.startsWith(String(year)))
         .reduce((sum, r) => {
           if (activePeriod) {
@@ -54,7 +54,7 @@ export default function VacationModal({
 
   const totalAfterSave = alreadyScheduled + calendarDays
   const limit = selectedEmployee?.totalVacationDays ?? 0
-  const wouldExceed = type === 'ferias' && calendarDays > 0 && totalAfterSave > limit
+  const wouldExceed = (type === 'ferias' || type === 'ferias-vendidas') && calendarDays > 0 && totalAfterSave > limit
 
   // For day off, end = start always
   function handleStartChange(val: string) {
@@ -66,6 +66,7 @@ export default function VacationModal({
   function handleTypeChange(val: RecordType) {
     setType(val)
     if (val === 'dayoff' && startDate) setEndDate(startDate)
+    if ((val === 'ferias' || val === 'ferias-vendidas') && type === 'dayoff') setEndDate('')
     setError('')
   }
 
@@ -82,8 +83,8 @@ export default function VacationModal({
   function validate(): string {
     if (!employeeId) return 'Selecione um funcionário.'
     if (!startDate) return 'Informe a data de início.'
-    if (type === 'ferias' && !endDate) return 'Informe a data de término.'
-    if (type === 'ferias' && endDate < startDate) return 'A data de término deve ser após o início.'
+    if ((type === 'ferias' || type === 'ferias-vendidas') && !endDate) return 'Informe a data de término.'
+    if ((type === 'ferias' || type === 'ferias-vendidas') && endDate < startDate) return 'A data de término deve ser após o início.'
     if (type === 'dayoff') {
       const d = new Date(startDate + 'T12:00:00')
       if (isWeekend(startDate)) return 'Day off não pode ser em fim de semana.'
@@ -161,6 +162,17 @@ export default function VacationModal({
               >
                 ☀️ Day off
               </button>
+              <button
+                type="button"
+                onClick={() => handleTypeChange('ferias-vendidas')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                  type === 'ferias-vendidas'
+                    ? 'bg-green-500 text-white border-transparent'
+                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                💰 Férias Vendidas
+              </button>
             </div>
           </div>
 
@@ -190,7 +202,7 @@ export default function VacationModal({
           </div>
 
           {/* Datas */}
-          <div className={`grid gap-3 ${type === 'ferias' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`grid gap-3 ${(type === 'ferias' || type === 'ferias-vendidas') ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">
                 {type === 'dayoff' ? 'Data' : 'Início'}
@@ -202,7 +214,7 @@ export default function VacationModal({
                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
               />
             </div>
-            {type === 'ferias' && (
+            {(type === 'ferias' || type === 'ferias-vendidas') && (
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700">Término</label>
                 <input
@@ -217,7 +229,7 @@ export default function VacationModal({
           </div>
 
           {/* Resumo de dias */}
-          {type === 'ferias' && calendarDays > 0 && (
+          {(type === 'ferias' || type === 'ferias-vendidas') && calendarDays > 0 && (
             <div className={`flex flex-col gap-2 rounded-lg px-4 py-3 text-sm border ${wouldExceed ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
               <div className="flex items-center justify-between">
                 <span className={wouldExceed ? 'text-red-700' : 'text-blue-700'}>Dias corridos neste período</span>

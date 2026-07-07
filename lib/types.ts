@@ -1,6 +1,6 @@
 export type Area = 'Estratégia' | 'Mídia' | 'SEO' | 'Atendimento' | 'Criação' | 'CRM' | 'Liderança'
 
-export type RecordType = 'ferias' | 'dayoff'
+export type RecordType = 'ferias' | 'dayoff' | 'ferias-vendidas'
 
 export interface Employee {
   id: string

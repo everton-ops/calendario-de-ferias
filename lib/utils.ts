@@ -122,9 +122,9 @@ export function getEmployeeStats(
     return countCalendarDays(r.startDate, r.endDate)
   }
 
-  const feriasRecords = employeeRecords.filter(r => r.type === 'ferias')
+  const feriasRecords = employeeRecords.filter(r => r.type === 'ferias' || r.type === 'ferias-vendidas')
 
-  // Dias já tirados: férias cujo fim já passou (inclusive em andamento)
+  // Dias já tirados/vendidos: férias cujo fim já passou
   const takenVacationDays = feriasRecords
     .filter(r => r.endDate <= today)
     .reduce((sum, r) => sum + calcDays(r), 0)

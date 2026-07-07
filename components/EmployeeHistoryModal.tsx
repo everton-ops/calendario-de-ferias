@@ -71,7 +71,7 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
     return countCalendarDays(r.startDate, r.endDate)
   }
 
-  const feriasFiltered = useMemo(() => filteredRecords.filter(r => r.type === 'ferias'), [filteredRecords])
+  const feriasFiltered = useMemo(() => filteredRecords.filter(r => r.type === 'ferias' || r.type === 'ferias-vendidas'), [filteredRecords])
 
   const takenDays = useMemo(() =>
     feriasFiltered.filter(r => r.endDate <= today).reduce((sum, r) => sum + calcDays(r), 0),
@@ -195,9 +195,11 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
                   >
                     <div className="flex items-center gap-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                        isFerias ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                        record.type === 'ferias' ? 'bg-blue-100 text-blue-700' :
+                        record.type === 'ferias-vendidas' ? 'bg-green-100 text-green-700' :
+                        'bg-amber-100 text-amber-700'
                       }`}>
-                        {isFerias ? 'Férias' : 'Day off'}
+                        {record.type === 'ferias' ? 'Férias' : record.type === 'ferias-vendidas' ? 'Férias Vendidas' : 'Day off'}
                       </span>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-gray-800">
