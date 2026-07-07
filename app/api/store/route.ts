@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 
 function requireSession(request: NextRequest): boolean {
   const session = request.cookies.get('cal-session')?.value
@@ -7,15 +7,23 @@ function requireSession(request: NextRequest): boolean {
   return session === secret
 }
 
+function getRedis() {
+  return new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  })
+}
+
 export async function GET(request: NextRequest) {
   if (!requireSession(request)) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
+  const redis = getRedis()
   const [employees, records, holidays] = await Promise.all([
-    kv.get('cal-employees'),
-    kv.get('cal-records'),
-    kv.get('cal-holidays'),
+    redis.get('cal-employees'),
+    redis.get('cal-records'),
+    redis.get('cal-holidays'),
   ])
 
   return NextResponse.json({
@@ -37,6 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Chave inválida.' }, { status: 400 })
   }
 
-  await kv.set(key, data)
+  const redis = getRedis()
+  await redis.set(key, data)
   return NextResponse.json({ ok: true })
 }
