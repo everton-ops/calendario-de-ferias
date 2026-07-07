@@ -54,8 +54,15 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
         r.startDate <= activePeriod.end && r.endDate >= activePeriod.start
       )
     }
-    return allEmpRecords.filter(r => r.startDate.startsWith(String(selectedYear)))
-  }, [allEmpRecords, activePeriod, selectedYear])
+    // Filtro por ano: exclui registros que pertencem ao período vigente fixo de outro ano
+    return allEmpRecords.filter(r => {
+      if (!r.startDate.startsWith(String(selectedYear))) return false
+      if (employee.periodStart && employee.periodEnd && !employee.periodRecurring) {
+        if (r.startDate <= employee.periodEnd && r.endDate >= employee.periodStart) return false
+      }
+      return true
+    })
+  }, [allEmpRecords, activePeriod, selectedYear, employee])
 
   const today = new Date().toISOString().split('T')[0]
 

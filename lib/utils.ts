@@ -105,10 +105,14 @@ export function getEmployeeStats(
   const employeeRecords = records.filter(r => {
     if (r.employeeId !== employee.id) return false
     if (period) {
-      // Inclui registros que se sobrepõem ao período vigente
       return r.startDate <= period.end && r.endDate >= period.start
     }
-    return r.startDate.startsWith(String(year))
+    // Filtro por ano: exclui registros que pertencem a um período vigente fixo de outro ano
+    if (!r.startDate.startsWith(String(year))) return false
+    if (employee.periodStart && employee.periodEnd && !employee.periodRecurring) {
+      if (r.startDate <= employee.periodEnd && r.endDate >= employee.periodStart) return false
+    }
+    return true
   })
 
   const today = new Date().toISOString().split('T')[0]
