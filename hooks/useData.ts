@@ -2,12 +2,27 @@
 
 import { useState, useEffect } from 'react'
 import { Employee, VacationRecord, CustomHoliday } from '@/lib/types'
-import { EMPLOYEES, VACATION_RECORDS } from '@/lib/mock-data'
 
-const STORAGE_KEYS = {
-  employees: 'cal-ferias-employees',
-  records: 'cal-ferias-records',
-  customHolidays: 'cal-ferias-custom-holidays',
+async function fetchStore(): Promise<{ employees: Employee[], records: VacationRecord[], holidays: CustomHoliday[] } | null> {
+  try {
+    const res = await fetch('/api/store')
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
+}
+
+async function saveToStore(key: string, data: unknown) {
+  try {
+    await fetch('/api/store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, data }),
+    })
+  } catch {
+    // silently fail — UI already updated optimistically
+  }
 }
 
 export function useData() {
@@ -17,28 +32,29 @@ export function useData() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    const storedEmployees = localStorage.getItem(STORAGE_KEYS.employees)
-    const storedRecords = localStorage.getItem(STORAGE_KEYS.records)
-    const storedHolidays = localStorage.getItem(STORAGE_KEYS.customHolidays)
-    setEmployees(storedEmployees ? JSON.parse(storedEmployees) : EMPLOYEES)
-    setRecords(storedRecords ? JSON.parse(storedRecords) : VACATION_RECORDS)
-    setCustomHolidays(storedHolidays ? JSON.parse(storedHolidays) : [])
-    setLoaded(true)
+    fetchStore().then(data => {
+      if (data) {
+        setEmployees(data.employees ?? [])
+        setRecords(data.records ?? [])
+        setCustomHolidays(data.holidays ?? [])
+      }
+      setLoaded(true)
+    })
   }, [])
 
   function saveEmployees(list: Employee[]) {
     setEmployees(list)
-    localStorage.setItem(STORAGE_KEYS.employees, JSON.stringify(list))
+    saveToStore('cal-employees', list)
   }
 
   function saveRecords(list: VacationRecord[]) {
     setRecords(list)
-    localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(list))
+    saveToStore('cal-records', list)
   }
 
   function saveCustomHolidays(list: CustomHoliday[]) {
     setCustomHolidays(list)
-    localStorage.setItem(STORAGE_KEYS.customHolidays, JSON.stringify(list))
+    saveToStore('cal-holidays', list)
   }
 
   function addEmployee(emp: Employee) { saveEmployees([...employees, emp]) }
