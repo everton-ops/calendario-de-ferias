@@ -118,6 +118,7 @@ export function getEmployeeStats(
   const today = new Date().toISOString().split('T')[0]
 
   function calcDays(r: VacationRecord): number {
+    if (r.type === 'ferias-vendidas') return r.soldDays ?? 0
     if (period) return countDaysInPeriod(r, period.start, period.end)
     return countCalendarDays(r.startDate, r.endDate)
   }

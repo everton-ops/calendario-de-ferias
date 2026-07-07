@@ -26,23 +26,31 @@ export default function VacationModal({
   const [type, setType] = useState<RecordType>(initial?.type ?? 'ferias')
   const [startDate, setStartDate] = useState(initial?.startDate ?? '')
   const [endDate, setEndDate] = useState(initial?.endDate ?? '')
+  const [soldDays, setSoldDays] = useState<number>(initial?.soldDays ?? 0)
+  const [soldYear, setSoldYear] = useState<number>(
+    initial?.startDate ? new Date(initial.startDate).getFullYear() : new Date().getFullYear()
+  )
   const [error, setError] = useState('')
 
   const selectedEmployee = employees.find(e => e.id === employeeId)
   const year = startDate ? new Date(startDate).getFullYear() : new Date().getFullYear()
 
-  const calendarDays = startDate && endDate && endDate >= startDate
-    ? countCalendarDays(startDate, endDate)
-    : 0
+  const calendarDays = type === 'ferias-vendidas'
+    ? soldDays
+    : startDate && endDate && endDate >= startDate
+      ? countCalendarDays(startDate, endDate)
+      : 0
 
   // Calcula dias já agendados no período vigente (excluindo o registro atual em edição)
-  const activePeriod = selectedEmployee ? getEffectivePeriod(selectedEmployee, year) : null
+  const effectiveYear = type === 'ferias-vendidas' ? soldYear : year
+  const activePeriod = selectedEmployee ? getEffectivePeriod(selectedEmployee, effectiveYear) : null
 
   const alreadyScheduled = selectedEmployee && (type === 'ferias' || type === 'ferias-vendidas')
     ? records
         .filter(r => r.employeeId === selectedEmployee.id && (r.type === 'ferias' || r.type === 'ferias-vendidas') && (!initial || r.id !== initial.id))
-        .filter(r => activePeriod ? (r.startDate <= activePeriod.end && r.endDate >= activePeriod.start) : r.startDate.startsWith(String(year)))
+        .filter(r => activePeriod ? (r.startDate <= activePeriod.end && r.endDate >= activePeriod.start) : r.startDate.startsWith(String(effectiveYear)))
         .reduce((sum, r) => {
+          if (r.type === 'ferias-vendidas') return sum + (r.soldDays ?? 0)
           if (activePeriod) {
             const s = r.startDate > activePeriod.start ? r.startDate : activePeriod.start
             const e = r.endDate < activePeriod.end ? r.endDate : activePeriod.end
@@ -82,9 +90,14 @@ export default function VacationModal({
 
   function validate(): string {
     if (!employeeId) return 'Selecione um funcionário.'
+    if (type === 'ferias-vendidas') {
+      if (!soldDays || soldDays <= 0) return 'Informe a quantidade de dias vendidos.'
+      if (wouldExceed) return `Limite excedido: o funcionário tem direito a ${limit} dias, já tem ${alreadyScheduled} agendados e esta venda adicionaria mais ${soldDays} dias (total: ${totalAfterSave}).`
+      return ''
+    }
     if (!startDate) return 'Informe a data de início.'
-    if ((type === 'ferias' || type === 'ferias-vendidas') && !endDate) return 'Informe a data de término.'
-    if ((type === 'ferias' || type === 'ferias-vendidas') && endDate < startDate) return 'A data de término deve ser após o início.'
+    if (type === 'ferias' && !endDate) return 'Informe a data de término.'
+    if (type === 'ferias' && endDate < startDate) return 'A data de término deve ser após o início.'
     if (type === 'dayoff') {
       const d = new Date(startDate + 'T12:00:00')
       if (isWeekend(startDate)) return 'Day off não pode ser em fim de semana.'
@@ -99,13 +112,24 @@ export default function VacationModal({
     e.preventDefault()
     const err = validate()
     if (err) { setError(err); return }
-    onSave({
-      id: initial?.id ?? `rec-${Date.now()}`,
-      employeeId,
-      type,
-      startDate,
-      endDate: type === 'dayoff' ? startDate : endDate,
-    })
+    if (type === 'ferias-vendidas') {
+      onSave({
+        id: initial?.id ?? `rec-${Date.now()}`,
+        employeeId,
+        type,
+        startDate: `${soldYear}-01-01`,
+        endDate: `${soldYear}-01-01`,
+        soldDays,
+      })
+    } else {
+      onSave({
+        id: initial?.id ?? `rec-${Date.now()}`,
+        employeeId,
+        type,
+        startDate,
+        endDate: type === 'dayoff' ? startDate : endDate,
+      })
+    }
     onClose()
   }
 
@@ -201,35 +225,64 @@ export default function VacationModal({
             )}
           </div>
 
-          {/* Datas */}
-          <div className={`grid gap-3 ${(type === 'ferias' || type === 'ferias-vendidas') ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">
-                {type === 'dayoff' ? 'Data' : 'Início'}
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={e => handleStartChange(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
-              />
-            </div>
-            {(type === 'ferias' || type === 'ferias-vendidas') && (
+          {/* Datas / Férias Vendidas */}
+          {type === 'ferias-vendidas' ? (
+            <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">Término</label>
+                <label className="text-sm font-medium text-gray-700">Dias vendidos</label>
                 <input
-                  type="date"
-                  value={endDate}
-                  min={startDate}
-                  onChange={e => { setEndDate(e.target.value); setError('') }}
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={soldDays || ''}
+                  onChange={e => { setSoldDays(Number(e.target.value)); setError('') }}
+                  placeholder="0"
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
               </div>
-            )}
-          </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Ano</label>
+                <select
+                  value={soldYear}
+                  onChange={e => { setSoldYear(Number(e.target.value)); setError('') }}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 bg-white"
+                >
+                  {[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : (
+            <div className={`grid gap-3 ${type === 'ferias' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">
+                  {type === 'dayoff' ? 'Data' : 'Início'}
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => handleStartChange(e.target.value)}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                />
+              </div>
+              {type === 'ferias' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">Término</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    min={startDate}
+                    onChange={e => { setEndDate(e.target.value); setError('') }}
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Resumo de dias */}
-          {(type === 'ferias' || type === 'ferias-vendidas') && calendarDays > 0 && (
+          {(type === 'ferias' || type === 'ferias-vendidas') && calendarDays > 0 && selectedEmployee && (
             <div className={`flex flex-col gap-2 rounded-lg px-4 py-3 text-sm border ${wouldExceed ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
               <div className="flex items-center justify-between">
                 <span className={wouldExceed ? 'text-red-700' : 'text-blue-700'}>Dias corridos neste período</span>

@@ -20,6 +20,7 @@ export interface VacationRecord {
   startDate: string // ISO yyyy-mm-dd
   endDate: string   // ISO yyyy-mm-dd
   type: RecordType
+  soldDays?: number // usado apenas para type === 'ferias-vendidas'
 }
 
 export type CustomHolidayType = 'regional' | 'sazonal' | 'recesso' | 'outro'
