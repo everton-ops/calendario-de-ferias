@@ -125,14 +125,16 @@ export function getEmployeeStats(
 
   const feriasRecords = employeeRecords.filter(r => r.type === 'ferias' || r.type === 'ferias-vendidas')
 
-  // Dias já tirados/vendidos: férias cujo fim já passou
+  // Dias já tirados/vendidos: férias-vendidas sempre contam como tiradas; demais pelo fim já passou
   const takenVacationDays = feriasRecords
-    .filter(r => r.endDate <= today)
-    .reduce((sum, r) => sum + calcDays(r), 0)
+    .reduce((sum, r) => {
+      if (r.type === 'ferias-vendidas') return sum + calcDays(r)
+      return r.endDate <= today ? sum + calcDays(r) : sum
+    }, 0)
 
-  // Dias agendados futuros: férias que ainda não começaram
+  // Dias agendados futuros: férias que ainda não começaram (férias-vendidas excluídas)
   const scheduledVacationDays = feriasRecords
-    .filter(r => r.startDate > today)
+    .filter(r => r.type !== 'ferias-vendidas' && r.startDate > today)
     .reduce((sum, r) => sum + calcDays(r), 0)
 
   const totalScheduledDays = takenVacationDays + scheduledVacationDays

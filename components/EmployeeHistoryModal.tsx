@@ -49,37 +49,43 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
 
   // Filtra registros para o período/ano selecionado
   const filteredRecords = useMemo(() => {
-    if (activePeriod) {
-      return allEmpRecords.filter(r =>
-        r.startDate <= activePeriod.end && r.endDate >= activePeriod.start
-      )
-    }
-    // Filtro por ano: exclui registros que pertencem ao período vigente fixo de outro ano
-    return allEmpRecords.filter(r => {
-      if (!r.startDate.startsWith(String(selectedYear))) return false
-      if (employee.periodStart && employee.periodEnd && !employee.periodRecurring) {
-        if (r.startDate <= employee.periodEnd && r.endDate >= employee.periodStart) return false
-      }
-      return true
-    })
+    const base = activePeriod
+      ? allEmpRecords.filter(r => {
+          if (r.type === 'ferias-vendidas') return r.startDate.startsWith(String(selectedYear))
+          return r.startDate <= activePeriod.end && r.endDate >= activePeriod.start
+        })
+      : allEmpRecords.filter(r => {
+          if (r.type === 'ferias-vendidas') return r.startDate.startsWith(String(selectedYear))
+          if (!r.startDate.startsWith(String(selectedYear))) return false
+          if (employee.periodStart && employee.periodEnd && !employee.periodRecurring) {
+            if (r.startDate <= employee.periodEnd && r.endDate >= employee.periodStart) return false
+          }
+          return true
+        })
+    return base
   }, [allEmpRecords, activePeriod, selectedYear, employee])
 
   const today = new Date().toISOString().split('T')[0]
 
   function calcDays(r: VacationRecord): number {
+    if (r.type === 'ferias-vendidas') return r.soldDays ?? 0
     if (activePeriod) return countDaysInPeriod(r, activePeriod.start, activePeriod.end)
     return countCalendarDays(r.startDate, r.endDate)
   }
 
   const feriasFiltered = useMemo(() => filteredRecords.filter(r => r.type === 'ferias' || r.type === 'ferias-vendidas'), [filteredRecords])
 
+  // férias-vendidas sempre contam como tiradas
   const takenDays = useMemo(() =>
-    feriasFiltered.filter(r => r.endDate <= today).reduce((sum, r) => sum + calcDays(r), 0),
+    feriasFiltered.reduce((sum, r) => {
+      if (r.type === 'ferias-vendidas') return sum + calcDays(r)
+      return r.endDate <= today ? sum + calcDays(r) : sum
+    }, 0),
     [feriasFiltered, activePeriod]
   )
 
   const scheduledDays = useMemo(() =>
-    feriasFiltered.filter(r => r.startDate > today).reduce((sum, r) => sum + calcDays(r), 0),
+    feriasFiltered.filter(r => r.type !== 'ferias-vendidas' && r.startDate > today).reduce((sum, r) => sum + calcDays(r), 0),
     [feriasFiltered, activePeriod]
   )
 
@@ -182,12 +188,13 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
           ) : (
             <div className="flex flex-col gap-2">
               {filteredRecords.map(record => {
-                const days = activePeriod
-                  ? countDaysInPeriod(record, activePeriod.start, activePeriod.end)
-                  : countCalendarDays(record.startDate, record.endDate)
-                const totalDays = countCalendarDays(record.startDate, record.endDate)
-                const isFerias = record.type === 'ferias'
-                const partial = activePeriod && days !== totalDays
+                const days = record.type === 'ferias-vendidas'
+                  ? (record.soldDays ?? 0)
+                  : activePeriod
+                    ? countDaysInPeriod(record, activePeriod.start, activePeriod.end)
+                    : countCalendarDays(record.startDate, record.endDate)
+                const totalDays = record.type === 'ferias-vendidas' ? days : countCalendarDays(record.startDate, record.endDate)
+                const partial = record.type !== 'ferias-vendidas' && activePeriod && days !== totalDays
                 return (
                   <div
                     key={record.id}
@@ -199,15 +206,21 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
                         record.type === 'ferias-vendidas' ? 'bg-green-100 text-green-700' :
                         'bg-amber-100 text-amber-700'
                       }`}>
-                        {record.type === 'ferias' ? 'Férias' : record.type === 'ferias-vendidas' ? 'Férias Vendidas' : 'Day off'}
+                        {record.type === 'ferias' ? 'Férias' : record.type === 'ferias-vendidas' ? 'Dias Vendidos' : 'Day off'}
                       </span>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-800">
-                          {formatDate(record.startDate)} → {formatDate(record.endDate)}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {days} dias corridos{partial && <span className="text-indigo-400"> ({totalDays} total, {days} no período)</span>}
-                        </span>
+                        {record.type === 'ferias-vendidas' ? (
+                          <span className="text-sm font-medium text-gray-800">{days} dias vendidos em {record.startDate.slice(0, 4)}</span>
+                        ) : (
+                          <>
+                            <span className="text-sm font-medium text-gray-800">
+                              {formatDate(record.startDate)} → {formatDate(record.endDate)}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {days} dias corridos{partial && <span className="text-indigo-400"> ({totalDays} total, {days} no período)</span>}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
