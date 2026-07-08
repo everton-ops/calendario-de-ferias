@@ -66,22 +66,25 @@ export function customHolidayMap(customHolidays: CustomHoliday[], year: number):
   return map
 }
 
-// Calcula o período vigente efetivo para um funcionário num dado ano
+// Calcula o período vigente efetivo para um funcionário num dado ano.
+// Para períodos que cruzam o ano (ex: Set→Ago), o "ano" é o ano de FIM do período,
+// pois é onde a maioria dos meses cai (ex: Set/2025→Ago/2026 pertence ao ano 2026).
 export function getEffectivePeriod(employee: Employee, year: number): { start: string; end: string } | null {
   if (!employee.periodStart || !employee.periodEnd) return null
 
   if (employee.periodRecurring) {
     const startMmDd = employee.periodStart.slice(5)
     const endMmDd = employee.periodEnd.slice(5)
-    const start = `${year}-${startMmDd}`
-    // Se o mês/dia do fim é anterior ao do início, o período atravessa o ano-virada
-    const end = endMmDd < startMmDd ? `${year + 1}-${endMmDd}` : `${year}-${endMmDd}`
-    return { start, end }
+    if (endMmDd < startMmDd) {
+      // Período cross-year: year = ano de fim; início é no ano anterior
+      return { start: `${year - 1}-${startMmDd}`, end: `${year}-${endMmDd}` }
+    }
+    // Período dentro do mesmo ano
+    return { start: `${year}-${startMmDd}`, end: `${year}-${endMmDd}` }
   }
 
-  // Para períodos fixos (não recorrentes): só usa o período quando o ano selecionado
-  // corresponde ao ano de início do período. Outros anos usam filtro por ano simples.
-  if (Number(employee.periodStart.slice(0, 4)) === year) {
+  // Para períodos fixos (não recorrentes): associa ao ano de fim do período
+  if (Number(employee.periodEnd.slice(0, 4)) === year) {
     return { start: employee.periodStart, end: employee.periodEnd }
   }
   return null
