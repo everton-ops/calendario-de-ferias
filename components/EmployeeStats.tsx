@@ -45,8 +45,9 @@ export default function EmployeeStatsPanel({ stats, year, onEdit, onRemove, onAd
     const areaBg = AREA_BG_LIGHT[employee.area]
     const areaText = AREA_TEXT_COLORS[employee.area]
     const activePeriod = getEffectivePeriod(employee, year)
-    // Para períodos recorrentes, o deadline efetivo é o fim do período atual (não o valor fixo salvo)
-    const effectiveDeadline = activePeriod?.end ?? employee.vacationDeadline
+    // Deadline só é exibido no ano atual ou futuro — em anos passados não faz sentido
+    const currentYear = new Date().getFullYear()
+    const effectiveDeadline = year >= currentYear ? (activePeriod?.end ?? employee.vacationDeadline) : null
     const dl = effectiveDeadline ? deadlineInfo(effectiveDeadline) : null
     const isCritical = remainingVacationDays > 20
     const barColor = isCritical ? 'bg-orange-400' : areaColor
