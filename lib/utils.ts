@@ -131,6 +131,8 @@ export function getEmployeeStats(
 
   const employeeRecords = records.filter(r => {
     if (r.employeeId !== employee.id) return false
+    // ferias-vendidas: pertence ao ano do soldYear (startDate), não ao range de datas
+    if (r.type === 'ferias-vendidas') return r.startDate.startsWith(String(year))
     if (period) {
       return r.startDate <= period.end && r.endDate >= period.start
     }
