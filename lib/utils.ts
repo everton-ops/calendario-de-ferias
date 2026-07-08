@@ -86,14 +86,12 @@ export function getEffectivePeriod(employee: Employee, year: number): { start: s
   if (employee.periodRecurring) {
     const startMmDd = employee.periodStart.slice(5)
     const endMmDd = employee.periodEnd.slice(5)
-    if (endMmDd < startMmDd) {
-      // Período cross-year: descobrir qual ano é o dominante
+    // endMmDd <= startMmDd cobre cross-year (Nov→Ago) e período de 1 ano exato (Nov→Nov)
+    if (endMmDd <= startMmDd) {
       const dominant = crossYearDominant(startMmDd, endMmDd)
       if (dominant === 'end') {
-        // year = ano de fim (ex: Set→Ago: 2026 = Ago/2026)
         return { start: `${year - 1}-${startMmDd}`, end: `${year}-${endMmDd}` }
       } else {
-        // year = ano de início (ex: Jan→Jan: 2025 = Jan/2025→Jan/2026)
         return { start: `${year}-${startMmDd}`, end: `${year + 1}-${endMmDd}` }
       }
     }
