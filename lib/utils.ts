@@ -66,9 +66,20 @@ export function customHolidayMap(customHolidays: CustomHoliday[], year: number):
   return map
 }
 
+// Determina se o ano dominante de um período cross-year é o de início ou de fim.
+// Compara quantos meses caem em cada ano; o que tiver mais é o dominante.
+// Ex: Jan→Jan (12 meses no início vs 1 no fim) → início domina
+// Ex: Set→Ago (4 meses no início vs 8 no fim) → fim domina
+function crossYearDominant(startMmDd: string, endMmDd: string): 'start' | 'end' {
+  const startMonth = Number(startMmDd.slice(0, 2))
+  const endMonth = Number(endMmDd.slice(0, 2))
+  const monthsInStartYear = 13 - startMonth // Jan=12, Set=4, Dez=1
+  const monthsInEndYear = endMonth          // Jan=1, Ago=8
+  return monthsInEndYear > monthsInStartYear ? 'end' : 'start'
+}
+
 // Calcula o período vigente efetivo para um funcionário num dado ano.
-// Para períodos que cruzam o ano (ex: Set→Ago), o "ano" é o ano de FIM do período,
-// pois é onde a maioria dos meses cai (ex: Set/2025→Ago/2026 pertence ao ano 2026).
+// O "ano" do período é determinado por qual ano contém a maioria dos meses.
 export function getEffectivePeriod(employee: Employee, year: number): { start: string; end: string } | null {
   if (!employee.periodStart || !employee.periodEnd) return null
 
@@ -76,17 +87,30 @@ export function getEffectivePeriod(employee: Employee, year: number): { start: s
     const startMmDd = employee.periodStart.slice(5)
     const endMmDd = employee.periodEnd.slice(5)
     if (endMmDd < startMmDd) {
-      // Período cross-year: year = ano de fim; início é no ano anterior
-      return { start: `${year - 1}-${startMmDd}`, end: `${year}-${endMmDd}` }
+      // Período cross-year: descobrir qual ano é o dominante
+      const dominant = crossYearDominant(startMmDd, endMmDd)
+      if (dominant === 'end') {
+        // year = ano de fim (ex: Set→Ago: 2026 = Ago/2026)
+        return { start: `${year - 1}-${startMmDd}`, end: `${year}-${endMmDd}` }
+      } else {
+        // year = ano de início (ex: Jan→Jan: 2025 = Jan/2025→Jan/2026)
+        return { start: `${year}-${startMmDd}`, end: `${year + 1}-${endMmDd}` }
+      }
     }
     // Período dentro do mesmo ano
     return { start: `${year}-${startMmDd}`, end: `${year}-${endMmDd}` }
   }
 
-  // Para períodos fixos (não recorrentes): associa ao ano de fim do período
-  if (Number(employee.periodEnd.slice(0, 4)) === year) {
-    return { start: employee.periodStart, end: employee.periodEnd }
+  // Para períodos fixos (não recorrentes): determina o ano dominante
+  const startYear = Number(employee.periodStart.slice(0, 4))
+  const endYear = Number(employee.periodEnd.slice(0, 4))
+  if (startYear !== endYear) {
+    const dominant = crossYearDominant(employee.periodStart.slice(5), employee.periodEnd.slice(5))
+    const dominantYear = dominant === 'end' ? endYear : startYear
+    if (dominantYear === year) return { start: employee.periodStart, end: employee.periodEnd }
+    return null
   }
+  if (startYear === year) return { start: employee.periodStart, end: employee.periodEnd }
   return null
 }
 
