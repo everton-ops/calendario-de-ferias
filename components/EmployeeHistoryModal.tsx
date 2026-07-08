@@ -153,10 +153,10 @@ export default function EmployeeHistoryModal({ employee, records, onClose, onEdi
                 <span className="text-sm font-semibold text-amber-600">{totalDayOffs}</span>
               </div>
             )}
-            {employee.vacationDeadline && (
+            {(activePeriod?.end ?? employee.vacationDeadline) && (
               <div className="flex flex-col">
                 <span className="text-xs text-gray-500">Data limite</span>
-                <span className="text-sm font-semibold text-orange-600">{formatDate(employee.vacationDeadline)}</span>
+                <span className="text-sm font-semibold text-orange-600">{formatDate(activePeriod?.end ?? employee.vacationDeadline!)}</span>
               </div>
             )}
           </div>
