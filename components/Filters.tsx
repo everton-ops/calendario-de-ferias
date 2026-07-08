@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import { Area, Employee } from '@/lib/types'
 import { AREA_COLORS } from '@/lib/utils'
 
@@ -9,8 +10,8 @@ const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','A
 interface FiltersProps {
   year: number
   onYearChange: (y: number) => void
-  selectedArea: Area | 'Todas'
-  onAreaChange: (a: Area | 'Todas') => void
+  selectedAreas: Area[]
+  onAreasChange: (areas: Area[]) => void
   selectedEmployee: string | 'Todos'
   onEmployeeChange: (id: string | 'Todos') => void
   employees: Employee[]
@@ -22,15 +23,40 @@ interface FiltersProps {
 
 export default function Filters({
   year, onYearChange,
-  selectedArea, onAreaChange,
+  selectedAreas, onAreasChange,
   selectedEmployee, onEmployeeChange,
   employees,
   view, onViewChange,
   selectedMonth, onMonthChange,
 }: FiltersProps) {
-  const filteredEmployees = selectedArea === 'Todas'
+  const [areaOpen, setAreaOpen] = useState(false)
+  const areaRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (areaRef.current && !areaRef.current.contains(e.target as Node)) setAreaOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function toggleArea(area: Area) {
+    const next = selectedAreas.includes(area)
+      ? selectedAreas.filter(a => a !== area)
+      : [...selectedAreas, area]
+    onAreasChange(next)
+    onEmployeeChange('Todos')
+  }
+
+  const filteredEmployees = selectedAreas.length === 0
     ? employees
-    : employees.filter(e => e.area === selectedArea)
+    : employees.filter(e => selectedAreas.includes(e.area))
+
+  const areaLabel = selectedAreas.length === 0
+    ? 'Todas'
+    : selectedAreas.length === 1
+      ? selectedAreas[0]
+      : `${selectedAreas.length} áreas`
 
   function prevMonth() {
     if (selectedMonth === 0) {
@@ -126,18 +152,44 @@ export default function Filters({
         <div className="w-px h-6 bg-gray-200 shrink-0" />
 
         {/* Área */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 relative" ref={areaRef}>
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Área</span>
-          <select
-            value={selectedArea}
-            onChange={e => { onAreaChange(e.target.value as Area | 'Todas'); onEmployeeChange('Todos') }}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          <button
+            type="button"
+            onClick={() => setAreaOpen(v => !v)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1 bg-white text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-1.5 min-w-[90px]"
           >
-            <option value="Todas">Todas</option>
-            {AREAS.map(a => (
-              <option key={a} value={a}>{a}</option>
-            ))}
-          </select>
+            <span className="flex-1 text-left">{areaLabel}</span>
+            <span className="text-gray-400 text-xs">▾</span>
+          </button>
+          {areaOpen && (
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[160px]">
+              <button
+                type="button"
+                onClick={() => { onAreasChange([]); onEmployeeChange('Todos') }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${selectedAreas.length === 0 ? 'font-semibold text-gray-900' : 'text-gray-600'}`}
+              >
+                <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${selectedAreas.length === 0 ? 'bg-gray-900 border-gray-900' : 'border-gray-300'}`}>
+                  {selectedAreas.length === 0 && <span className="text-white text-xs">✓</span>}
+                </span>
+                Todas
+              </button>
+              <div className="h-px bg-gray-100 mx-2 my-1" />
+              {AREAS.map(area => (
+                <button
+                  key={area}
+                  type="button"
+                  onClick={() => toggleArea(area)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors text-gray-700"
+                >
+                  <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${selectedAreas.includes(area) ? `${AREA_COLORS[area]} border-transparent` : 'border-gray-300'}`}>
+                    {selectedAreas.includes(area) && <span className="text-white text-xs">✓</span>}
+                  </span>
+                  {area}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="w-px h-6 bg-gray-200 shrink-0" />

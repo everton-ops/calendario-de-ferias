@@ -28,7 +28,7 @@ export default function Home() {
   } = useData()
 
   const [year, setYear] = useState(currentYear)
-  const [selectedArea, setSelectedArea] = useState<Area | 'Todas'>('Todas')
+  const [selectedAreas, setSelectedAreas] = useState<Area[]>([])
   const [selectedEmployee, setSelectedEmployee] = useState<string | 'Todos'>('Todos')
   const [view, setView] = useState<'timeline' | 'month'>('month')
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
@@ -54,10 +54,10 @@ export default function Home() {
 
   const filteredEmployees = useMemo(() => {
     let list = employees
-    if (selectedArea !== 'Todas') list = list.filter(e => e.area === selectedArea)
+    if (selectedAreas.length > 0) list = list.filter(e => selectedAreas.includes(e.area))
     if (selectedEmployee !== 'Todos') list = list.filter(e => e.id === selectedEmployee)
     return list
-  }, [employees, selectedArea, selectedEmployee])
+  }, [employees, selectedAreas, selectedEmployee])
 
   const stats = useMemo(() =>
     filteredEmployees.map(emp => getEmployeeStats(emp, records, year)),
@@ -162,8 +162,8 @@ export default function Home() {
         <Filters
           year={year}
           onYearChange={setYear}
-          selectedArea={selectedArea}
-          onAreaChange={setSelectedArea}
+          selectedAreas={selectedAreas}
+          onAreasChange={setSelectedAreas}
           selectedEmployee={selectedEmployee}
           onEmployeeChange={setSelectedEmployee}
           employees={employees}
