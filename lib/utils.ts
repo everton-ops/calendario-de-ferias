@@ -82,6 +82,11 @@ function crossYearDominant(startMmDd: string, endMmDd: string): 'start' | 'end' 
 // O "ano" do período é determinado por qual ano contém a maioria dos meses.
 export function getEffectivePeriod(employee: Employee, year: number): { start: string; end: string } | null {
   if (!employee.periodStart || !employee.periodEnd) return null
+  // Se "considerar a partir do ano de início", ignorar anos anteriores
+  if (employee.periodFromStartYear) {
+    const firstYear = Number(employee.periodStart.slice(0, 4))
+    if (year < firstYear) return null
+  }
 
   if (employee.periodRecurring) {
     const startMmDd = employee.periodStart.slice(5)

@@ -21,6 +21,7 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
   const [periodStart, setPeriodStart] = useState(initial?.periodStart ?? '')
   const [periodEnd, setPeriodEnd] = useState(initial?.periodEnd ?? '')
   const [periodRecurring, setPeriodRecurring] = useState(initial?.periodRecurring ?? false)
+  const [periodFromStartYear, setPeriodFromStartYear] = useState(initial?.periodFromStartYear ?? false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
       periodStart: periodStart || undefined,
       periodEnd: periodEnd || undefined,
       periodRecurring: (periodStart && periodEnd) ? periodRecurring : undefined,
+      periodFromStartYear: (periodStart && periodEnd) ? periodFromStartYear : undefined,
     })
     onClose()
   }
@@ -161,15 +163,29 @@ export default function EmployeeModal({ onClose, onSave, initial }: Props) {
               </div>
             </div>
             {periodStart && periodEnd && (
-              <label className="flex items-center gap-2.5 cursor-pointer select-none mt-1">
-                <input
-                  type="checkbox"
-                  checked={periodRecurring}
-                  onChange={e => setPeriodRecurring(e.target.checked)}
-                  className="w-4 h-4 accent-gray-800"
-                />
-                <span className="text-xs text-gray-700">Replicar para todos os anos (usa o mesmo dia/mês anualmente)</span>
-              </label>
+              <div className="flex flex-col gap-2 mt-1">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={periodRecurring}
+                    onChange={e => setPeriodRecurring(e.target.checked)}
+                    className="w-4 h-4 accent-gray-800"
+                  />
+                  <span className="text-xs text-gray-700">Replicar para todos os anos (usa o mesmo dia/mês anualmente)</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={periodFromStartYear}
+                    onChange={e => setPeriodFromStartYear(e.target.checked)}
+                    className="w-4 h-4 accent-gray-800"
+                  />
+                  <span className="text-xs text-gray-700">
+                    Considerar ano de início pra frente
+                    {periodStart && <span className="text-gray-400 ml-1">(a partir de {periodStart.slice(0, 4)})</span>}
+                  </span>
+                </label>
+              </div>
             )}
             {periodStart && (
               <button

@@ -12,6 +12,7 @@ export interface Employee {
   periodStart?: string       // início do período vigente (ISO yyyy-mm-dd)
   periodEnd?: string         // fim do período vigente (ISO yyyy-mm-dd)
   periodRecurring?: boolean  // replicar período para todos os anos
+  periodFromStartYear?: boolean // ignorar anos anteriores ao ano de início
 }
 
 export interface VacationRecord {
