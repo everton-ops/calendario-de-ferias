@@ -92,16 +92,20 @@ export function getEffectivePeriod(employee: Employee, year: number): { start: s
     const startMmDd = employee.periodStart.slice(5)
     const endMmDd = employee.periodEnd.slice(5)
     // endMmDd <= startMmDd cobre cross-year (Nov→Ago) e período de 1 ano exato (Nov→Nov)
+    let result: { start: string; end: string }
     if (endMmDd <= startMmDd) {
       const dominant = crossYearDominant(startMmDd, endMmDd)
       if (dominant === 'end') {
-        return { start: `${year - 1}-${startMmDd}`, end: `${year}-${endMmDd}` }
+        result = { start: `${year - 1}-${startMmDd}`, end: `${year}-${endMmDd}` }
       } else {
-        return { start: `${year}-${startMmDd}`, end: `${year + 1}-${endMmDd}` }
+        result = { start: `${year}-${startMmDd}`, end: `${year + 1}-${endMmDd}` }
       }
+    } else {
+      result = { start: `${year}-${startMmDd}`, end: `${year}-${endMmDd}` }
     }
-    // Período dentro do mesmo ano
-    return { start: `${year}-${startMmDd}`, end: `${year}-${endMmDd}` }
+    // Se "a partir do ano de início", ignorar períodos cujo início efetivo é anterior ao periodStart real
+    if (employee.periodFromStartYear && result.start < employee.periodStart) return null
+    return result
   }
 
   // Para períodos fixos (não recorrentes): determina o ano dominante
