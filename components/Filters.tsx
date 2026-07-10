@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Area, Employee } from '@/lib/types'
 import { AREA_COLORS } from '@/lib/utils'
 
-const AREAS: Area[] = ['Estratégia', 'Mídia', 'SEO', 'Atendimento', 'Criação', 'CRM', 'Liderança']
+const AREAS: Area[] = ['Atendimento', 'CRM', 'Criação', 'Estratégia', 'Liderança', 'Mídia', 'SEO']
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 interface FiltersProps {
@@ -48,9 +48,10 @@ export default function Filters({
     onEmployeeChange('Todos')
   }
 
-  const filteredEmployees = selectedAreas.length === 0
+  const filteredEmployees = (selectedAreas.length === 0
     ? employees
     : employees.filter(e => selectedAreas.includes(e.area))
+  ).slice().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
 
   const areaLabel = selectedAreas.length === 0
     ? 'Todas'
