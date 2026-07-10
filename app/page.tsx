@@ -60,7 +60,10 @@ export default function Home() {
   }, [employees, selectedAreas, selectedEmployee])
 
   const stats = useMemo(() =>
-    filteredEmployees.map(emp => getEmployeeStats(emp, records, year)),
+    filteredEmployees
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+      .map(emp => getEmployeeStats(emp, records, year)),
     [filteredEmployees, records, year]
   )
 
