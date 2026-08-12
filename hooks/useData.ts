@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Employee, VacationRecord, CustomHoliday } from '@/lib/types'
 
 async function fetchStore(): Promise<{ employees: Employee[], records: VacationRecord[], holidays: CustomHoliday[] } | null> {
@@ -13,15 +13,21 @@ async function fetchStore(): Promise<{ employees: Employee[], records: VacationR
   }
 }
 
-async function saveToStore(key: string, data: unknown) {
+async function saveToStore(key: string, data: unknown): Promise<boolean> {
   try {
-    await fetch('/api/store', {
+    const res = await fetch('/api/store', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, data }),
     })
-  } catch {
-    // silently fail — UI already updated optimistically
+    if (!res.ok) {
+      console.error(`[useData] saveToStore falhou para "${key}": HTTP ${res.status}`)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error(`[useData] saveToStore erro de rede para "${key}":`, err)
+    return false
   }
 }
 
@@ -31,8 +37,8 @@ export function useData() {
   const [customHolidays, setCustomHolidays] = useState<CustomHoliday[]>([])
   const [loaded, setLoaded] = useState(false)
 
-  useEffect(() => {
-    fetchStore().then(data => {
+  const reload = useCallback(() => {
+    return fetchStore().then(data => {
       if (data) {
         setEmployees(data.employees ?? [])
         setRecords(data.records ?? [])
@@ -42,19 +48,26 @@ export function useData() {
     })
   }, [])
 
-  function saveEmployees(list: Employee[]) {
+  useEffect(() => { reload() }, [reload])
+
+  async function saveEmployees(list: Employee[]) {
     setEmployees(list)
-    saveToStore('cal-employees', list)
+    await saveToStore('cal-employees', list)
   }
 
-  function saveRecords(list: VacationRecord[]) {
+  async function saveRecords(list: VacationRecord[]) {
     setRecords(list)
-    saveToStore('cal-records', list)
+    await saveToStore('cal-records', list)
   }
 
-  function saveCustomHolidays(list: CustomHoliday[]) {
+  async function saveCustomHolidays(list: CustomHoliday[]) {
     setCustomHolidays(list)
-    saveToStore('cal-holidays', list)
+    const ok = await saveToStore('cal-holidays', list)
+    if (!ok) {
+      alert('Erro ao salvar as datas especiais. Verifique sua conexão e tente novamente.')
+      // Recarrega do Redis para garantir consistência
+      reload()
+    }
   }
 
   function addEmployee(emp: Employee) { saveEmployees([...employees, emp]) }
@@ -77,5 +90,6 @@ export function useData() {
     addEmployee, updateEmployee, removeEmployee,
     addRecord, updateRecord, removeRecord,
     addCustomHoliday, updateCustomHoliday, removeCustomHoliday,
+    reload,
   }
 }
