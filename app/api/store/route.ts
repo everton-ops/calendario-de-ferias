@@ -34,10 +34,19 @@ export async function GET(request: NextRequest) {
     redis.get(`${prefix}cal-holidays`),
   ])
 
+  // Fallback para chaves legadas (sem prefixo) — dados registrados antes da feature de verticais
+  const [legacyEmployees, legacyRecords, legacyHolidays] = employees === null && vertical === 'performance'
+    ? await Promise.all([
+        redis.get('cal-employees'),
+        redis.get('cal-records'),
+        redis.get('cal-holidays'),
+      ])
+    : [null, null, null]
+
   return NextResponse.json({
-    employees: employees ?? [],
-    records: records ?? [],
-    holidays: holidays ?? [],
+    employees: employees ?? legacyEmployees ?? [],
+    records:   records   ?? legacyRecords   ?? [],
+    holidays:  holidays  ?? legacyHolidays  ?? [],
   })
 }
 
