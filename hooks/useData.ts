@@ -3,9 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Employee, VacationRecord, CustomHoliday } from '@/lib/types'
 
-async function fetchStore(): Promise<{ employees: Employee[], records: VacationRecord[], holidays: CustomHoliday[] } | null> {
+export type Vertical = 'performance' | 'tecnologia'
+
+async function fetchStore(vertical: Vertical): Promise<{ employees: Employee[], records: VacationRecord[], holidays: CustomHoliday[] } | null> {
   try {
-    const res = await fetch('/api/store')
+    const res = await fetch(`/api/store?vertical=${vertical}`)
     if (!res.ok) return null
     return res.json()
   } catch {
@@ -13,12 +15,12 @@ async function fetchStore(): Promise<{ employees: Employee[], records: VacationR
   }
 }
 
-async function saveToStore(key: string, data: unknown): Promise<boolean> {
+async function saveToStore(key: string, data: unknown, vertical: Vertical): Promise<boolean> {
   try {
     const res = await fetch('/api/store', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, data }),
+      body: JSON.stringify({ key, data, vertical }),
     })
     if (!res.ok) {
       console.error(`[useData] saveToStore falhou para "${key}": HTTP ${res.status}`)
@@ -31,46 +33,49 @@ async function saveToStore(key: string, data: unknown): Promise<boolean> {
   }
 }
 
-export function useData() {
+export function useData(vertical: Vertical) {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [records, setRecords] = useState<VacationRecord[]>([])
   const [customHolidays, setCustomHolidays] = useState<CustomHoliday[]>([])
   const [loaded, setLoaded] = useState(false)
 
   const reload = useCallback(() => {
-    return fetchStore().then(data => {
+    setLoaded(false)
+    return fetchStore(vertical).then(data => {
       if (data) {
         setEmployees(data.employees ?? [])
         setRecords(data.records ?? [])
         setCustomHolidays(data.holidays ?? [])
+      } else {
+        setEmployees([])
+        setRecords([])
+        setCustomHolidays([])
       }
       setLoaded(true)
     })
-  }, [])
+  }, [vertical])
 
   useEffect(() => {
     reload()
-    // Recarrega quando a aba volta ao foco — garante sincronismo entre usuários
     window.addEventListener('focus', reload)
     return () => window.removeEventListener('focus', reload)
   }, [reload])
 
   async function saveEmployees(list: Employee[]) {
     setEmployees(list)
-    await saveToStore('cal-employees', list)
+    await saveToStore('cal-employees', list, vertical)
   }
 
   async function saveRecords(list: VacationRecord[]) {
     setRecords(list)
-    await saveToStore('cal-records', list)
+    await saveToStore('cal-records', list, vertical)
   }
 
   async function saveCustomHolidays(list: CustomHoliday[]) {
     setCustomHolidays(list)
-    const ok = await saveToStore('cal-holidays', list)
+    const ok = await saveToStore('cal-holidays', list, vertical)
     if (!ok) {
       alert('Erro ao salvar as datas especiais. Verifique sua conexão e tente novamente.')
-      // Recarrega do Redis para garantir consistência
       reload()
     }
   }

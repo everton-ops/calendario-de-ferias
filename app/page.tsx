@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Area, Employee, VacationRecord } from '@/lib/types'
 import { getEmployeeStats } from '@/lib/utils'
-import { useData } from '@/hooks/useData'
+import { useData, Vertical } from '@/hooks/useData'
 import Filters from '@/components/Filters'
 import CalendarTimeline from '@/components/CalendarTimeline'
 import MonthView from '@/components/MonthView'
@@ -16,16 +16,33 @@ import VacationSuggestionModal from '@/components/VacationSuggestionModal'
 import EmployeeHistoryModal from '@/components/EmployeeHistoryModal'
 import AreaDashboard from '@/components/AreaDashboard'
 
+const VERTICALS: { id: Vertical; label: string; color: string; active: string }[] = [
+  { id: 'performance', label: 'Performance', color: 'hover:bg-blue-50 hover:text-blue-700 border-blue-100', active: 'bg-blue-600 text-white border-blue-600' },
+  { id: 'tecnologia',  label: 'Tecnologia',  color: 'hover:bg-emerald-50 hover:text-emerald-700 border-emerald-100', active: 'bg-emerald-600 text-white border-emerald-600' },
+]
+
 export default function Home() {
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth()
+
+  const [vertical, setVertical] = useState<Vertical>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('cal-vertical') as Vertical) ?? 'performance'
+    }
+    return 'performance'
+  })
+
+  function switchVertical(v: Vertical) {
+    setVertical(v)
+    localStorage.setItem('cal-vertical', v)
+  }
 
   const {
     employees, records, customHolidays, loaded,
     addEmployee, updateEmployee, removeEmployee,
     addRecord, updateRecord, removeRecord,
     addCustomHoliday, updateCustomHoliday, removeCustomHoliday,
-  } = useData()
+  } = useData(vertical)
 
   const [year, setYear] = useState(currentYear)
   const [selectedAreas, setSelectedAreas] = useState<Area[]>([])
@@ -113,9 +130,24 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-screen-2xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Calendário de Férias</h1>
-            <p className="text-sm text-gray-500">Gestão de férias e day offs por área</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Calendário de Férias</h1>
+              <p className="text-sm text-gray-500">Gestão de férias e day offs por área</p>
+            </div>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+              {VERTICALS.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => switchVertical(v.id)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
+                    vertical === v.id ? v.active : `bg-transparent text-gray-500 border-transparent ${v.color}`
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button

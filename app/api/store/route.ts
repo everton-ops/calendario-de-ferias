@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
 
+const VERTICALS = ['performance', 'tecnologia']
+
 function requireSession(request: NextRequest): boolean {
   const session = request.cookies.get('cal-session')?.value
   const secret = process.env.APP_SESSION_SECRET ?? 'calendario-ferias'
@@ -19,11 +21,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
+  const vertical = request.nextUrl.searchParams.get('vertical') ?? 'performance'
+  if (!VERTICALS.includes(vertical)) {
+    return NextResponse.json({ error: 'Vertical inválida.' }, { status: 400 })
+  }
+
+  const prefix = `${vertical}:`
   const redis = getRedis()
   const [employees, records, holidays] = await Promise.all([
-    redis.get('cal-employees'),
-    redis.get('cal-records'),
-    redis.get('cal-holidays'),
+    redis.get(`${prefix}cal-employees`),
+    redis.get(`${prefix}cal-records`),
+    redis.get(`${prefix}cal-holidays`),
   ])
 
   return NextResponse.json({
@@ -38,7 +46,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
-  const { key, data } = await request.json()
+  const { key, data, vertical = 'performance' } = await request.json()
+
+  if (!VERTICALS.includes(vertical)) {
+    return NextResponse.json({ error: 'Vertical inválida.' }, { status: 400 })
+  }
 
   const allowed = ['cal-employees', 'cal-records', 'cal-holidays']
   if (!allowed.includes(key)) {
@@ -46,6 +58,6 @@ export async function POST(request: NextRequest) {
   }
 
   const redis = getRedis()
-  await redis.set(key, data)
+  await redis.set(`${vertical}:${key}`, data)
   return NextResponse.json({ ok: true })
 }
