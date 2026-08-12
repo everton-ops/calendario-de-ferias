@@ -48,7 +48,12 @@ export function useData() {
     })
   }, [])
 
-  useEffect(() => { reload() }, [reload])
+  useEffect(() => {
+    reload()
+    // Recarrega quando a aba volta ao foco — garante sincronismo entre usuários
+    window.addEventListener('focus', reload)
+    return () => window.removeEventListener('focus', reload)
+  }, [reload])
 
   async function saveEmployees(list: Employee[]) {
     setEmployees(list)
