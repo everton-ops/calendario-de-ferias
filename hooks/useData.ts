@@ -31,8 +31,8 @@ export function useData() {
   const [customHolidays, setCustomHolidays] = useState<CustomHoliday[]>([])
   const [loaded, setLoaded] = useState(false)
 
-  function loadFromStore() {
-    return fetchStore().then(data => {
+  useEffect(() => {
+    fetchStore().then(data => {
       if (data) {
         setEmployees(data.employees ?? [])
         setRecords(data.records ?? [])
@@ -40,23 +40,6 @@ export function useData() {
       }
       setLoaded(true)
     })
-  }
-
-  useEffect(() => {
-    loadFromStore()
-
-    // Recarrega quando a aba volta ao foco
-    function onFocus() { loadFromStore() }
-    window.addEventListener('focus', onFocus)
-
-    // Recarrega a cada 30s para manter sincronizado entre usuários
-    const interval = setInterval(() => loadFromStore(), 30_000)
-
-    return () => {
-      window.removeEventListener('focus', onFocus)
-      clearInterval(interval)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function saveEmployees(list: Employee[]) {
