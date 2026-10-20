@@ -41,8 +41,20 @@ export default function VacationModal({
       ? countCalendarDays(startDate, endDate)
       : 0
 
-  // Calcula dias já agendados no período vigente (excluindo o registro atual em edição)
-  const effectiveYear = type === 'ferias-vendidas' ? soldYear : year
+  // Determina o ano do período vigente que contém a startDate
+  // Para períodos cross-year (ex: Abr→Abr), a data 29/03/2027 pertence ao período de 2026
+  function resolveEffectiveYear(emp: Employee, date: string): number {
+    const y = new Date(date).getFullYear()
+    if (type === 'ferias-vendidas') return soldYear
+    // Verifica se a data cai no período do ano anterior
+    const prevPeriod = getEffectivePeriod(emp, y - 1)
+    if (prevPeriod && date >= prevPeriod.start && date <= prevPeriod.end) return y - 1
+    return y
+  }
+
+  const effectiveYear = selectedEmployee && startDate
+    ? resolveEffectiveYear(selectedEmployee, startDate)
+    : (type === 'ferias-vendidas' ? soldYear : year)
   const activePeriod = selectedEmployee ? getEffectivePeriod(selectedEmployee, effectiveYear) : null
 
   const alreadyScheduled = selectedEmployee && (type === 'ferias' || type === 'ferias-vendidas')
