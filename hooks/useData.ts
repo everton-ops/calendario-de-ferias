@@ -57,8 +57,9 @@ export function useData(vertical: Vertical) {
 
   useEffect(() => {
     reload()
-    window.addEventListener('focus', reload)
-    return () => window.removeEventListener('focus', reload)
+    function onVisibility() { if (document.visibilityState === 'visible') reload() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [reload])
 
   async function saveEmployees(list: Employee[]) {
